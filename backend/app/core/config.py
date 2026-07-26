@@ -25,6 +25,9 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 60
     rate_limit_per_minute: int = 60
     sap_adapter_mode: Literal["mock", "real"] = "mock"
+    planning_statistics_window_days: int = Field(default=30, ge=1, le=365)
+    planning_decision_horizon_days: int = Field(default=30, ge=1, le=365)
+
 
 
     @field_validator("allowed_origins", mode="before")

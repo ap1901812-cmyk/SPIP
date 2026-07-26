@@ -12,7 +12,8 @@ Status values: `NOT STARTED`, `IN PROGRESS`, `BLOCKED`, `DONE`.
 | Foundation | DONE | FastAPI/React foundation, Docker, logging, health API and CI pipeline |
 | Security | DONE | User/Role models, PBKDF2 hashing, JWT tokens, RBAC dependencies, audit log & rate limiter |
 | Database/Data Integration | DONE | Multi-plant schema, CSV ingestion, SAPAdapterInterface & MockSAPAdapter demo mode |
-| Business/Planning Engine | NOT STARTED | ROP criticality and V1 safety-stock policy defined |
+| Business/Planning Engine | DONE | V1 Safety Stock, Planning Availability (AI), ROP and deterministic Criticality engine |
+
 | Forecasting/ML | NOT STARTED | Designed for ~2–6 months history initially |
 | Allocation/Approval | NOT STARTED | Manager approval required |
 | Notifications | NOT STARTED | In-app + SMTP |

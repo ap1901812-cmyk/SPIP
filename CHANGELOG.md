@@ -6,7 +6,15 @@ Use semantic versions where practical.
 
 ## [Unreleased]
 ### Added
+- Phase 4 Core Planning & Inventory Decision Engine (`PLAN-001` through `PLAN-004`).
+- Consumption statistics module (`app/services/planning/statistics.py`) for rolling daily demand mean ($D$) and population standard deviation ($\sigma_d$).
+- Ordered lead time resolution service (`app/services/planning/lead_time.py`) supporting primary vendor lead time, plant-material master, and default fallbacks.
+- V1 Safety Stock engine (`app/services/planning/safety_stock.py`) implementing $SS = Z \times \sigma_d \times \sqrt{LT}$ with configurable ABC class Z-factors, min floors, max ceilings, and manual overrides.
+- Planning Availability engine (`app/services/planning/availability.py`) implementing $AI = \text{usable} + \text{eligible\_incoming\_po} - \text{committed}$ with explicit double-subtraction prevention.
+- Integrated Planning Engine Orchestrator (`app/services/planning/engine.py`) calculating $D \times LT$, $ROP = (D \times LT) + SS$, and deterministic criticality (`CRITICAL`, `WARNING`, `HEALTHY`) with explainable audit reasoning.
+- Phase 4 REST endpoints (`GET /api/v1/planning/materials/{code}?plant_code=...`, `GET /api/v1/planning/summary`).
 - Phase 3 Data Models, Ingestion & SAP Adapter foundation (DATA-001 through DATA-004, SAP-001).
+
 - Multi-plant database models (`Plant`, `Material`, `PlantMaterial`, `Vendor`, `VendorMaterial`, `ConsumptionHistory`, `InventorySnapshot`, `PurchaseOrder`, `PurchaseOrderLine`).
 - Alembic database migration `002_domain_schema.py` for all multi-plant domain entities.
 - Abstract `SAPAdapterInterface` contract with `MockSAPAdapter` (multi-plant synthetic data generator) and `RealSAPAdapter` (deferred stub).
