@@ -6,7 +6,13 @@ Use semantic versions where practical.
 
 ## [Unreleased]
 ### Added
+- Phase 5 V1 Demand Forecasting (`ML-001` through `ML-005`).
+- Candidate forecasting model hierarchy (`app/services/forecasting/models.py`) implementing `NaiveForecastModel`, `MovingAverageForecastModel` (7D/14D), and `ExponentialSmoothingForecastModel` ($\alpha=0.3$).
+- Chronological time-series backtesting and metrics evaluation module (`app/services/forecasting/evaluation.py`) computing MAE, RMSE, and WMAPE without future data leakage.
+- Forecasting engine orchestrator (`app/services/forecasting/engine.py`) executing candidate backtest selection (lowest WMAPE) or deterministic fallback for insufficient historical observations (< 5 records).
+- Phase 5 REST endpoints (`GET /api/v1/forecasts/materials/{code}?plant_code=...`, `GET /api/v1/forecasts/summary`).
 - Phase 4 Core Planning & Inventory Decision Engine (`PLAN-001` through `PLAN-004`).
+
 - Consumption statistics module (`app/services/planning/statistics.py`) for rolling daily demand mean ($D$) and population standard deviation ($\sigma_d$).
 - Ordered lead time resolution service (`app/services/planning/lead_time.py`) supporting primary vendor lead time, plant-material master, and default fallbacks.
 - V1 Safety Stock engine (`app/services/planning/safety_stock.py`) implementing $SS = Z \times \sigma_d \times \sqrt{LT}$ with configurable ABC class Z-factors, min floors, max ceilings, and manual overrides.

@@ -14,7 +14,8 @@ Status values: `NOT STARTED`, `IN PROGRESS`, `BLOCKED`, `DONE`.
 | Database/Data Integration | DONE | Multi-plant schema, CSV ingestion, SAPAdapterInterface & MockSAPAdapter demo mode |
 | Business/Planning Engine | DONE | V1 Safety Stock, Planning Availability (AI), ROP and deterministic Criticality engine |
 
-| Forecasting/ML | NOT STARTED | Designed for ~2–6 months history initially |
+| Forecasting/ML | DONE | Time-aware backtesting framework, candidate model selection & fallback |
+
 | Allocation/Approval | NOT STARTED | Manager approval required |
 | Notifications | NOT STARTED | In-app + SMTP |
 | Frontend | NOT STARTED | Preserve workflow; improve red/white UI |
