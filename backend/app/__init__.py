@@ -1,0 +1,1 @@
+"""SPIP backend package."""

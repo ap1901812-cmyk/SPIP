@@ -1,0 +1,7 @@
+:root { font-family: Inter, ui-sans-serif, system-ui, sans-serif; color: #212529; background: #f7f7f8; --spip-red: #b51f2b; --spip-red-dark: #851720; --surface: #ffffff; --border: #dedfe3; }
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 320px; }
+.app-shell { min-height: 100vh; }
+.app-header { display: flex; align-items: center; gap: 1rem; padding: 1.25rem clamp(1.25rem, 5vw, 4rem); background: var(--surface); border-bottom: 4px solid var(--spip-red); }
+.app-header h1, .app-header p { margin: 0; }.app-header h1 { font-size: 1.15rem; }.app-header p, .eyebrow { color: #62666d; }.brand-mark { display: grid; place-items: center; width: 2.5rem; height: 2.5rem; border-radius: .35rem; color: white; background: var(--spip-red); font-weight: 800; }
+.foundation-card { max-width: 48rem; margin: 4rem auto; padding: 2rem; background: var(--surface); border: 1px solid var(--border); border-radius: .5rem; box-shadow: 0 4px 16px rgb(0 0 0 / 5%); }.foundation-card h2 { color: var(--spip-red-dark); }.eyebrow { font-weight: 700; letter-spacing: .08em; font-size: .75rem; }.skip-link { position: absolute; left: -999px; }.skip-link:focus { left: 1rem; top: 1rem; z-index: 1; background: white; padding: .5rem; }
