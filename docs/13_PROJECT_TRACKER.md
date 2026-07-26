@@ -1,4 +1,4 @@
-# 13 — Project Tracker
+# 13 â€” Project Tracker
 
 ## SPIP
 
@@ -16,7 +16,7 @@ Status values: `NOT STARTED`, `IN PROGRESS`, `BLOCKED`, `DONE`.
 
 | Forecasting/ML | DONE | Time-aware backtesting framework, candidate model selection & fallback |
 
-| Allocation/Approval | NOT STARTED | Manager approval required |
+| Allocation/Approval | DONE | V1 lifecycle (DRAFT, PENDING_APPROVAL, APPROVED, REJECTED), current-edit exclusion & Manager approval |
 | Notifications | NOT STARTED | In-app + SMTP |
 | Frontend | NOT STARTED | Preserve workflow; improve red/white UI |
 | Reporting/Jobs | NOT STARTED | |
@@ -31,7 +31,7 @@ Status values: `NOT STARTED`, `IN PROGRESS`, `BLOCKED`, `DONE`.
 - SAP + Excel/CSV data ingestion.
 - SMTP email plus in-app notifications.
 - Demo enterprise-grade deployment; no organization name in product documentation.
-- Historical demand availability initially assumed around 2–6 months.
+- Historical demand availability initially assumed around 2â€“6 months.
 - Planning Availability and deterministic ROP-based criticality are approved.
 - Safety-stock V1 uses configurable ABC-class defaults and lead-time fallback.
 - Demo SAP mode uses a mock adapter; real SAP connectivity is deferred.
@@ -41,6 +41,6 @@ Status values: `NOT STARTED`, `IN PROGRESS`, `BLOCKED`, `DONE`.
 | Capability | Status | Notes |
 |---|---|---|
 | Consolidated Excel/CSV export | NOT STARTED | Filter-aware, RBAC-controlled; async for large reports |
-| Outbound SAP adapter | NOT STARTED | Mock adapter default; real transport deferred behind contract |
-| Controlled SAP write-back | NOT STARTED | Validated, authorized, auditable and idempotent |
+| Outbound SAP adapter | DONE | Mock adapter default with write_back_allocation contract |
+| Controlled SAP write-back | DONE | Validated, authorized, auditable and idempotent |
 | SAP acknowledgement/retry | NOT STARTED | Track success/failure/reference and notify on failures |

@@ -33,3 +33,6 @@ class RealSAPAdapter(SAPAdapterInterface):
 
     def sync_to_database(self, db: Session) -> dict[str, int]:
         raise NotImplementedError("Real SAP transport is a deferred external dependency.")
+
+    def write_back_allocation(self, db: Session, allocation: Any) -> dict[str, Any]:
+        raise NotImplementedError("Real SAP transport is a deferred external dependency.")

@@ -1,6 +1,12 @@
 from __future__ import annotations
 
+import enum
 from datetime import date, datetime
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.db.models.user import User
+
 
 from sqlalchemy import (
     Boolean,
@@ -16,6 +22,14 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
+
+
+class AllocationStatusEnum(enum.StrEnum):
+    DRAFT = "DRAFT"
+    PENDING_APPROVAL = "PENDING_APPROVAL"
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
+
 
 
 class Plant(Base):
@@ -229,3 +243,53 @@ class PurchaseOrderLine(Base):
 
     po: Mapped[PurchaseOrder] = relationship("PurchaseOrder", back_populates="lines")
     material: Mapped[Material] = relationship("Material", lazy="joined")
+
+
+class Allocation(Base):
+    __tablename__ = "allocations"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    allocation_number: Mapped[str] = mapped_column(
+        String(50), unique=True, index=True, nullable=False
+    )
+    plant_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("plants.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    material_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("materials.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    vendor_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("vendors.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    allocated_quantity: Mapped[float] = mapped_column(Float, nullable=False)
+    uom: Mapped[str] = mapped_column(String(20), nullable=False, default="KG")
+    status: Mapped[str] = mapped_column(
+        String(30), nullable=False, default=AllocationStatusEnum.DRAFT.value, index=True
+    )
+
+    created_by_user_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("users.id", ondelete="RESTRICT"), nullable=False, index=True
+    )
+    approved_by_user_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    rejection_reason: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    sap_reference_id: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+    plant: Mapped[Plant] = relationship("Plant", lazy="joined")
+    material: Mapped[Material] = relationship("Material", lazy="joined")
+    vendor: Mapped[Vendor | None] = relationship("Vendor", lazy="joined")
+    created_by_user: Mapped[User] = relationship(
+        "User", foreign_keys=[created_by_user_id], lazy="joined"
+    )
+    approved_by_user: Mapped[User | None] = relationship(
+        "User", foreign_keys=[approved_by_user_id], lazy="joined"
+    )

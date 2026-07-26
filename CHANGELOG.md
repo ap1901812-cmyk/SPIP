@@ -6,7 +6,15 @@ Use semantic versions where practical.
 
 ## [Unreleased]
 ### Added
+- Phase 6 Allocation & Manager Approval workflow (`ALLOC-001` through `ALLOC-003`, `SAP-002`, `SAP-003`).
+- Database model `Allocation` (`DRAFT`, `PENDING_APPROVAL`, `APPROVED`, `REJECTED`) and Alembic migration `003_allocations_schema.py`.
+- Allocation service layer (`app/services/allocation.py`) enforcing capacity checks, optimistic concurrency locking (`version`), state transitions, and audit logging.
+- **Current-Edit Exclusion Rule:** Implemented capacity validation during edits excluding current allocation instance to prevent double-subtraction false positives.
+- Planning Availability integration: active committed allocations (`PENDING_APPROVAL`, `APPROVED`) reduce availability exactly once; non-consuming statuses (`DRAFT`, `REJECTED`) do not consume availability.
+- Outbound SAP write-back integration contract (`write_back_allocation()`) generating synthetic SAP PO reference numbers in mock mode.
+- Phase 6 REST endpoints (`POST /api/v1/allocations`, `GET /api/v1/allocations`, `PUT /api/v1/allocations/{id}`, `POST /api/v1/allocations/{id}/submit`, `POST /api/v1/allocations/{id}/approve`, `POST /api/v1/allocations/{id}/reject`).
 - Phase 5 V1 Demand Forecasting (`ML-001` through `ML-005`).
+
 - Candidate forecasting model hierarchy (`app/services/forecasting/models.py`) implementing `NaiveForecastModel`, `MovingAverageForecastModel` (7D/14D), and `ExponentialSmoothingForecastModel` ($\alpha=0.3$).
 - Chronological time-series backtesting and metrics evaluation module (`app/services/forecasting/evaluation.py`) computing MAE, RMSE, and WMAPE without future data leakage.
 - Forecasting engine orchestrator (`app/services/forecasting/engine.py`) executing candidate backtest selection (lowest WMAPE) or deterministic fallback for insufficient historical observations (< 5 records).

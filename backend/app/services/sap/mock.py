@@ -420,3 +420,15 @@ class MockSAPAdapter(SAPAdapterInterface):
 
         db.commit()
         return counts
+
+    def write_back_allocation(self, db: Session, allocation: Any) -> dict[str, Any]:
+        """Simulates SAP write-back for approved allocation in demo mode."""
+        sap_ref = f"SAP-PO-9000{allocation.id}"
+        allocation.sap_reference_id = sap_ref
+        db.add(allocation)
+        db.commit()
+        return {
+            "status": "SUCCESS",
+            "sap_reference_id": sap_ref,
+            "message": f"Allocation {allocation.allocation_number} committed to SAP mock adapter.",
+        }

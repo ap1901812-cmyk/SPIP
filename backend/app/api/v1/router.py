@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 
+from app.api.v1.routes.allocations import router as allocations_router
 from app.api.v1.routes.auth import router as auth_router
 from app.api.v1.routes.consumption import router as consumption_router
 from app.api.v1.routes.forecasting import router as forecasting_router
@@ -26,3 +27,4 @@ api_router.include_router(imports_router)
 api_router.include_router(sap_router)
 api_router.include_router(planning_router)
 api_router.include_router(forecasting_router)
+api_router.include_router(allocations_router)

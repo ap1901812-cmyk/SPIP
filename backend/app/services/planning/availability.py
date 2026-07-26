@@ -6,7 +6,13 @@ from typing import NamedTuple
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
-from app.db.models.domain import InventorySnapshot, PurchaseOrder, PurchaseOrderLine
+from app.db.models.domain import (
+    Allocation,
+    AllocationStatusEnum,
+    InventorySnapshot,
+    PurchaseOrder,
+    PurchaseOrderLine,
+)
 
 
 class AvailabilityResult(NamedTuple):
@@ -24,12 +30,16 @@ def calculate_planning_availability(
     material_id: int,
     decision_horizon_days: int | None = None,
     as_of_date: date | None = None,
+    exclude_allocation_id: int | None = None,
 ) -> AvailabilityResult:
     """Calculates Planning Availability (AI) avoiding double counting:
     AI = usable_physical_stock + eligible_incoming_po_qty - committed_allocations
 
     usable_physical_stock is already net of reserved & blocked inventory.
     Reserved and blocked stock are returned for audit trace only and NOT subtracted again.
+
+    Committed allocations include active allocations in PENDING_APPROVAL or APPROVED status.
+    exclude_allocation_id excludes a specific allocation (for edit validation).
     """
     horizon = (
         decision_horizon_days
@@ -73,9 +83,23 @@ def calculate_planning_availability(
         )
         .all()
     )
-
     eligible_po_qty = sum(float(line.open_quantity) for line in po_lines if line.open_quantity > 0)
-    committed_allocations = 0.0  # V1 baseline allocation tracking
+
+    # 3. Fetch active committed allocations (PENDING_APPROVAL and APPROVED)
+    active_statuses = [
+        AllocationStatusEnum.PENDING_APPROVAL.value,
+        AllocationStatusEnum.APPROVED.value,
+    ]
+    query_alloc = db.query(Allocation).filter(
+        Allocation.plant_id == plant_id,
+        Allocation.material_id == material_id,
+        Allocation.status.in_(active_statuses),
+    )
+    if exclude_allocation_id is not None:
+        query_alloc = query_alloc.filter(Allocation.id != exclude_allocation_id)
+
+    allocations = query_alloc.all()
+    committed_allocations = sum(float(a.allocated_quantity) for a in allocations)
 
     # Planning Availability calculation: usable + eligible PO - committed
     effective_ai = max(0.0, usable_stock + eligible_po_qty - committed_allocations)

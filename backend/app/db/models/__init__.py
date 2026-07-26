@@ -1,5 +1,7 @@
 from app.db.models.audit import AuditLog
 from app.db.models.domain import (
+    Allocation,
+    AllocationStatusEnum,
     ConsumptionHistory,
     InventorySnapshot,
     Material,
@@ -13,6 +15,8 @@ from app.db.models.domain import (
 from app.db.models.user import RoleEnum, User, UserRole
 
 __all__ = [
+    "Allocation",
+    "AllocationStatusEnum",
     "AuditLog",
     "ConsumptionHistory",
     "InventorySnapshot",

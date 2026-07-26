@@ -45,3 +45,8 @@ class SAPAdapterInterface(ABC):
     def sync_to_database(self, db: Session) -> dict[str, int]:
         """Ingests normalized SAP records into durable application database."""
         pass
+
+    @abstractmethod
+    def write_back_allocation(self, db: Session, allocation: Any) -> dict[str, Any]:
+        """Executes controlled write-back of an approved allocation to SAP."""
+        pass
