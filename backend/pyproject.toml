@@ -6,7 +6,8 @@ name = "spip-backend"
 version = "0.1.0"
 description = "SPIP modular-monolith API foundation"
 requires-python = ">=3.12"
-dependencies = ["alembic>=1.14,<2", "fastapi>=0.115,<1", "psycopg[binary]>=3.2,<4", "pydantic-settings>=2.6,<3", "sqlalchemy>=2.0,<3", "uvicorn[standard]>=0.32,<1"]
+dependencies = ["alembic>=1.14,<2", "fastapi>=0.115,<1", "openpyxl>=3.1,<4", "psycopg[binary]>=3.2,<4", "pydantic-settings>=2.6,<3", "sqlalchemy>=2.0,<3", "uvicorn[standard]>=0.32,<1"]
+
 [project.optional-dependencies]
 dev = ["httpx>=0.28,<1", "pip-audit>=2.8,<3", "pytest>=9.0.3,<10", "ruff>=0.8,<1"]
 [tool.hatch.build.targets.wheel]

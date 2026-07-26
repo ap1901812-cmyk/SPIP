@@ -24,6 +24,8 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 60
     rate_limit_per_minute: int = 60
+    sap_adapter_mode: Literal["mock", "real"] = "mock"
+
 
     @field_validator("allowed_origins", mode="before")
     @classmethod
