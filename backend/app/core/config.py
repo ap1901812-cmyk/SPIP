@@ -17,6 +17,13 @@ class Settings(BaseSettings):
     allowed_origins: Annotated[list[AnyHttpUrl], NoDecode] = Field(default_factory=list)
     max_request_body_bytes: int = Field(default=1_048_576, ge=1, le=52_428_800)
     database_url: PostgresDsn
+    secret_key: str = Field(
+        default="dev_secret_key_change_in_production_min_32_bytes_long_string",
+        min_length=32,
+    )
+    jwt_algorithm: str = "HS256"
+    access_token_expire_minutes: int = 60
+    rate_limit_per_minute: int = 60
 
     @field_validator("allowed_origins", mode="before")
     @classmethod

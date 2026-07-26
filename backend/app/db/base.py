@@ -2,4 +2,4 @@ from sqlalchemy.orm import DeclarativeBase
 
 
 class Base(DeclarativeBase):
-    """Base for future durable SPIP models."""
+    """Base for durable SPIP models."""

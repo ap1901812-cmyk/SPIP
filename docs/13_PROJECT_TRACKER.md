@@ -9,8 +9,8 @@ Status values: `NOT STARTED`, `IN PROGRESS`, `BLOCKED`, `DONE`.
 | Phase | Status | Notes |
 |---|---|---|
 | Specification review | DONE | Planning-rule decisions recorded; application implementation not started |
-| Foundation | NOT STARTED | |
-| Security | NOT STARTED | |
+| Foundation | DONE | FastAPI/React foundation, Docker, logging, health API and CI pipeline |
+| Security | DONE | User/Role models, PBKDF2 hashing, JWT tokens, RBAC dependencies, audit log & rate limiter |
 | Database/Data Integration | NOT STARTED | Mock SAP adapter planned; real connectivity deferred external dependency |
 | Business/Planning Engine | NOT STARTED | ROP criticality and V1 safety-stock policy defined |
 | Forecasting/ML | NOT STARTED | Designed for ~2–6 months history initially |
