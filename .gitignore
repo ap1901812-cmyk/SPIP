@@ -1,0 +1,55 @@
+# Environment variables / secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Node / React
+node_modules/
+dist/
+build/
+coverage/
+.vite/
+
+# IDE / editor
+.vscode/
+.idea/
+
+# Operating system
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+
+# Generated reports / exports
+exports/
+reports/generated/
+
+# Uploaded runtime files
+uploads/
+
+# Local databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Docker local overrides
+docker-compose.override.yml
