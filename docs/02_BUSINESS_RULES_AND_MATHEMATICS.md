@@ -84,7 +84,7 @@ Production requirements where applicable
 BOM requirements where applicable
 Material configuration
 Vendor information
-The authoritative system for each input shall be defined in the technical and integration specifications.
+The authoritative system for each input shall be defined in the technical and integration specifications. Legacy SAP reports such as MB51, MB5B, ME2N, ZIBP and ZRMRP are reference data sources only, not assumed production interfaces.
 ### 5. Data Validation Before Calculation
 No critical calculation shall run blindly on unvalidated data.
 At minimum, validation shall consider:
@@ -215,17 +215,12 @@ Before production implementation they must be mapped to a documented business pu
 The enterprise implementation shall classify them as:
 Legacy business rules requiring validation.
 If retained, their exact role in criticality or consumption classification shall be documented and tested.
-### 12. Safety Stock
-The reference implementation uses a safety-stock concept based on:
-where:
- = safety stock;
- = service-level factor;
- = standard deviation of demand per period;
- = lead time expressed in compatible periods.
-This formula assumes demand variability while lead time is treated as sufficiently stable.
+### 12. Safety Stock V1
+Safety stock is `SS = Z × σ_d × √LT`, where `Z` is the configured service-level factor, `σ_d` is demand standard deviation from a configurable rolling historical window, and `LT` is lead time in compatible days. The implementation must handle limited history, including the initially expected 2–6 months of data.
+
+Material planning configuration shall support ABC class, service level/Z, review period, minimum safety-stock floor and maximum safety-stock ceiling.
 ### 13. Service Level
-The -value represents the target cycle service level under the assumptions of the selected safety-stock
-model.
+The `Z` value represents the target cycle service level under the assumptions of the selected safety-stock model. Configurable V1 defaults are: Class A approximately 98% (`Z=2.05`), Class B approximately 95% (`Z=1.65`), and Class C approximately 90% (`Z=1.28`). These defaults are not permanent hardcoded rules.
 C −max σ
 +Cˉ σ
 SS=Zσ
@@ -239,21 +234,11 @@ Z
 
 The reference implementation has used approximately:
 corresponding approximately to a 95% one-sided normal service level.
-The enterprise system shall not permanently hardcode 1.65.
-Target service levels shall be approved business configuration and may eventually vary by material class
-or business criticality.
-### 14. Variable Lead-Time Safety Stock
-Where both demand and supplier lead time vary materially, the simpler safety-stock formula may be
-insufficient.
-A more general candidate formulation is:
-where:
- = average lead time;
- = demand standard deviation;
- = average demand per period;
- = lead-time standard deviation.
-This formula shall only be used where its assumptions match the available business data.
-The enterprise implementation shall select the safety-stock method according to validated data
-availability and approved business requirements.
+The reference value of 1.65 is superseded by the configurable class defaults above.
+### 14. Lead-Time Selection and V2 Enhancement
+Prefer realized historical lead time where sufficient data exists. If it is insufficient, use this ordered fallback: material/vendor historical lead time; material historical lead time; configured master/vendor lead time; then an explicit fallback marked with a low-confidence/data-quality flag.
+
+Variable-lead-time safety stock is a V2 enhancement and shall not be implemented in V1. Its documented candidate formula is `SS = Z × √(LT × σ_d² + D² × σ_LT²)` and may only be adopted when data and assumptions are validated.
 ### 15. Safety-Stock Edge Cases
 The implementation must explicitly handle:
 missing lead time;
@@ -285,7 +270,7 @@ LT
 •
 
 ### 16. Reorder Point
-Where reorder-point logic is required:
+ROP is required for the approved criticality policy:
 For approximately constant daily demand:
 where:
  = reorder point;
@@ -295,18 +280,12 @@ where:
 Reorder point answers:
 At what inventory position should replenishment action be triggered?
 It does not by itself determine the optimal purchase quantity.
-### 17. Inventory Position
-Planning must distinguish physical stock from effective inventory position.
-A conceptual inventory position may be:
-Additional components may be included according to approved enterprise business definitions.
-The exact treatment of:
-quality stock;
-blocked stock;
-in-transit stock;
-open PO;
-reservations;
-allocations
-must be documented before implementation.
+### 17. Planning Availability
+Planning Availability (`AI`) is the effective inventory available for planning:
+
+`AI = usable physical stock + eligible confirmed incoming supply − applicable reservations/blocked commitments − already-committed allocations`
+
+Incoming supply counts only when confirmed and expected within the configurable planning/decision horizon. Every quantity must affect AI exactly once: if unusable or reserved stock is already excluded from usable physical stock, it must not be subtracted again. Calculations must be traceable at minimum by plant, material, quantity, UOM, source, as-of timestamp and calculation/version information.
 ROP=D +LT SS
 ROP=( ×Dˉ LT)+SS
 • ROP
@@ -423,43 +402,22 @@ Validated
 Historical WMAPE:
 7.8%
 ### 27. Material Criticality
-Material criticality shall represent planning urgency.
-The reference application uses status concepts comparable to:
-Critical;
-Warning;
-OK/Healthy.
-The enterprise version shall preserve this capability while formally documenting the thresholds.
-A conceptual framework is:
-Projected supply insufficient
-for protected planning horizon
-        ↓
-CRITICAL
-Supply approaching protected threshold
-        ↓
-WARNING
-Adequate projected coverage
-        ↓
-HEALTHY
-•
-•
-•
-•
-•
-•
-•
+Material criticality is deterministic business logic. Let `AI` be Planning Availability, `D` average forecasted daily demand, `LT` lead time in days, `SS` safety stock, and `ROP = D × LT + SS`.
 
-The exact production rule must be based on validated inventory position, demand/forecast, safety
-stock, lead time, and incoming supply.
+- `CRITICAL` when `AI < D × LT`
+- `WARNING` when `D × LT ≤ AI < ROP`
+- `HEALTHY` when `AI ≥ ROP`
+
+Forecasting may provide `D`, but ML/forecasting must not directly determine the status. V1 does not require two-day hysteresis; stabilized dashboard status and alert deduplication/cooldown are future separate capabilities.
 ### 28. Criticality Explainability
 A status shall never appear without a reason.
 For example:
 Status: CRITICAL
 Reason:
-Projected inventory falls below
-safety stock within supplier lead time.
-Current Stock: 2,100 kg
-Open Supply: 500 kg
-Forecast Demand: 2,000 kg
+Planning Availability is below demand during supplier lead time.
+Planning Availability: 2,100 kg
+Average Forecasted Daily Demand: 2,000 kg
+Lead Time: 1 day
 Safety Stock: 900 kg
 This allows planners to validate the system's reasoning.
 ### 29. Allocation
@@ -754,7 +712,7 @@ Simple moving-average/trend forecastPRESERVE as baseline/fallback
 Existing Logic Enterprise Treatment
 12-day forecast horizon VALIDATE / configurable baseline
 Critical/Warning/OK concept PRESERVE
-Existing criticality thresholds VALIDATE
+ROP-based criticality thresholds PRESERVE
 Vendor allocation PRESERVE
 Exclude current allocation during editPRESERVE
 Frontend-only allocation validationREPLACE
@@ -777,11 +735,6 @@ or domain-owner requirements before being frozen for production:
 exact seven-day consumption-window purpose;
 exact purpose of Max − SD;
 exact purpose of Average + SD;
-exact critical/warning/healthy thresholds;
-exact safety-stock service-level policy;
-whether supplier lead-time variability is available;
-exact treatment of open purchase orders;
-exact definition of available stock;
 •
 •
 •
@@ -796,7 +749,6 @@ exact definition of available stock;
 8.
 
 exact treatment of existing allocations;
-exact forecast horizon;
 exact production/BOM relationship where applicable;
 rounding and unit-conversion rules.
 Claude shall not invent these values during implementation.

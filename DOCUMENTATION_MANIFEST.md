@@ -30,5 +30,6 @@ The current master package explicitly includes:
 - consolidated XLSX/CSV report export;
 - controlled bidirectional SAP integration/write-back;
 - related RBAC/security, API, testing, tickets and tracker requirements.
+- resolved ROP-based criticality, Planning Availability, V1 safety-stock and mock-first SAP adapter decisions.
 
 No new documentation folder was introduced; these requirements were added to the authoritative existing specifications.

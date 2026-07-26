@@ -214,6 +214,8 @@ The reference backend contains separate services for:
 
 The exact enterprise SAP connection mechanism is not fully established.
 
+Legacy reports such as MB51, MB5B, ME2N, ZIBP and ZRMRP are reference data sources only; they do not define guaranteed production SAP interfaces.
+
 ### Enterprise treatment — REFINE
 Use a defined integration adapter boundary:
 

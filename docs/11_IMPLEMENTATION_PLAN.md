@@ -16,10 +16,10 @@ Authentication, RBAC, secrets/config, validation, rate limiting, safe errors, au
 ## Phase 3 — Data Model & Integration
 Implement plants, materials, vendors, consumption, inventory, PO/incoming supply and import framework for SAP plus Excel/CSV.
 
-Because the exact SAP integration mechanism is not yet known, use an adapter/interface boundary so it can be replaced without rewriting planning logic.
+Use an `SAPAdapterInterface` and normalized records. Implement `MockSAPAdapter` as the default demo mode; real SAP connectivity is a deferred external dependency that can replace the adapter without rewriting planning logic.
 
 ## Phase 4 — Business/Planning Engine
-Implement validated statistics, safety stock, inventory position, requirement and criticality rules with extensive unit tests.
+Implement validated statistics, V1 safety stock, Planning Availability, requirement and ROP-based criticality rules with extensive unit tests.
 
 Do not invent unresolved business thresholds.
 

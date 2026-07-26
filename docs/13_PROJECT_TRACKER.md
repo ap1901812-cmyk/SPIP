@@ -8,11 +8,11 @@ Status values: `NOT STARTED`, `IN PROGRESS`, `BLOCKED`, `DONE`.
 
 | Phase | Status | Notes |
 |---|---|---|
-| Specification review | NOT STARTED | Claude must review docs before coding |
+| Specification review | DONE | Planning-rule decisions recorded; application implementation not started |
 | Foundation | NOT STARTED | |
 | Security | NOT STARTED | |
-| Database/Data Integration | NOT STARTED | SAP mechanism partially unknown |
-| Business/Planning Engine | NOT STARTED | Some legacy thresholds require validation |
+| Database/Data Integration | NOT STARTED | Mock SAP adapter planned; real connectivity deferred external dependency |
+| Business/Planning Engine | NOT STARTED | ROP criticality and V1 safety-stock policy defined |
 | Forecasting/ML | NOT STARTED | Designed for ~2–6 months history initially |
 | Allocation/Approval | NOT STARTED | Manager approval required |
 | Notifications | NOT STARTED | In-app + SMTP |
@@ -30,12 +30,15 @@ Status values: `NOT STARTED`, `IN PROGRESS`, `BLOCKED`, `DONE`.
 - SMTP email plus in-app notifications.
 - Demo enterprise-grade deployment; no organization name in product documentation.
 - Historical demand availability initially assumed around 2–6 months.
+- Planning Availability and deterministic ROP-based criticality are approved.
+- Safety-stock V1 uses configurable ABC-class defaults and lead-time fallback.
+- Demo SAP mode uses a mock adapter; real SAP connectivity is deferred.
 
 ## Added Capability Tracking
 
 | Capability | Status | Notes |
 |---|---|---|
 | Consolidated Excel/CSV export | NOT STARTED | Filter-aware, RBAC-controlled; async for large reports |
-| Outbound SAP adapter | NOT STARTED | Exact SAP transport remains configurable/unknown |
+| Outbound SAP adapter | NOT STARTED | Mock adapter default; real transport deferred behind contract |
 | Controlled SAP write-back | NOT STARTED | Validated, authorized, auditable and idempotent |
 | SAP acknowledgement/retry | NOT STARTED | Track success/failure/reference and notify on failures |

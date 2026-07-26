@@ -11,7 +11,8 @@ Use semantic versions where practical.
 - Initial specification package.
 
 ### Changed
-- None.
+- Resolved planning-rule specifications: ROP-based criticality, Planning Availability and configurable V1 safety stock.
+- Defined a mock-first SAP adapter contract for demo implementation; real SAP connectivity remains deferred.
 
 ### Fixed
 - None.

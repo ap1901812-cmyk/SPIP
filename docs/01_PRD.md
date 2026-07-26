@@ -396,6 +396,7 @@ Warning;
 Healthy/OK.
 The exact terminology and thresholds shall be configurable where appropriate and documented.
 Users must be able to understand why a material received a particular classification.
+Criticality shall use the approved deterministic ROP-based planning policy; forecasting may supply demand inputs but shall not directly determine status.
 ### FR-09 — Demand Forecasting
 SPIP shall provide future demand forecasts for applicable materials.
 The forecasting capability shall not be restricted by the PRD to a single forecasting algorithm.
@@ -1211,7 +1212,7 @@ SPIP shall allow authorized users to generate and download consolidated planning
 Large exports should be generated asynchronously and made available through a job/status workflow.
 
 ### Controlled SAP Write-Back
-SPIP shall support a configurable outbound SAP integration capability for approved business actions. Because the exact SAP interface is not yet known, implementation must use an integration adapter rather than hardcoding a specific SAP protocol.
+SPIP shall support a configurable outbound SAP integration capability for approved business actions. Business logic shall use an adapter contract; the demo shall use a mock adapter by default, while real SAP connectivity remains a deferred external dependency.
 
 Applicable write-back must be validated, authorized, auditable and protected against duplicate submission. Where the business action requires approval, manager approval must occur before write-back.
 

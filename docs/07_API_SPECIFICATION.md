@@ -98,3 +98,5 @@ Required behavior:
 - notify appropriate users on terminal failure.
 
 Do not create an endpoint that allows the frontend to directly execute unrestricted SAP commands.
+
+SAP-facing application services must use the configured adapter contract and normalized request/result structures. The API must not expose a concrete SAP transport; demo mode uses the mock adapter by default.

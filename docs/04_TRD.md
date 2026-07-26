@@ -227,6 +227,8 @@ validation;
 OpenAPI documentation;
 appropriate idempotency for critical operations.
 Detailed contracts belong in 07_API_SPECIFICATION.md.
+### 10.1 SAP Adapter Contract
+Application business logic shall depend on an `SAPAdapterInterface` with stable normalized data structures, not a concrete SAP protocol. V1 uses `SPIP Core → SAPAdapterInterface → MockSAPAdapter`; a future `RealSAPAdapter` may replace it without rewriting planning logic. Configuration shall select the mode (for example, `SAP_ADAPTER_MODE=mock` or `real`), with mock as the demo default.
 ### 11. Load Balancing & Horizontal Scaling
 The backend shall be designed to support multiple application instances.
 •

@@ -35,6 +35,8 @@ The system must support more than one plant. Plant-specific inventory, consumpti
 
 Do not assume that a material has identical lead time, stock, vendor availability, or planning configuration at every plant.
 
+Material planning configuration must support ABC class, service level/Z, review period, minimum/maximum safety-stock bounds and calculation-version metadata. Availability inputs and results must retain plant, material, quantity, UOM, source and as-of timestamp for traceability.
+
 ## 4. Data Integrity
 Use:
 - primary and foreign keys;

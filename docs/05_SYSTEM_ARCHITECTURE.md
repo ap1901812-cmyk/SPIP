@@ -218,7 +218,7 @@ This is important when multiple FastAPI instances exist.
 For example, authentication rate limiting must work across all instances, not separately on each server .
 Redis is not the authoritative database for planning data.
 ### 10. Enterprise/SAP Integration
-SPIP may receive planning information from SAP or other approved enterprise systems.
+SPIP may receive planning information from SAP or other approved enterprise systems through an `SAPAdapterInterface` with stable normalized records. The demo default is `MockSAPAdapter`; `RealSAPAdapter` is a deferred external dependency selected by configuration, not a dependency of planning logic.
 Concept:
 SAP / Enterprise Source
           ↓
@@ -429,7 +429,7 @@ SAP / Excel / CSV
  Status + Audit + Notification
 ```
 
-SAP integration is bidirectional at the architecture boundary, but the exact transport/protocol remains configurable until the real enterprise interface is known.
+SAP integration is bidirectional at the architecture boundary. The demo uses mock mode by default; the real transport/protocol remains a deferred external dependency behind the same adapter contract.
 
 Report export flow:
 

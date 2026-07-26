@@ -22,11 +22,11 @@
 | DATA-001 | Plant/material/vendor models | P0 | DB-001 |
 | DATA-002 | Consumption/inventory/PO models | P0 | DATA-001 |
 | DATA-003 | Excel/CSV import pipeline | P1 | SEC-008, DATA-002 |
-| DATA-004 | SAP integration adapter boundary | P1 | DATA-002 |
+| DATA-004 | SAP adapter interface + default mock adapter | P1 | DATA-002 |
 | PLAN-001 | Consumption statistics | P0 | DATA-002 |
-| PLAN-002 | Safety-stock engine | P0 | PLAN-001 |
-| PLAN-003 | Inventory/net-requirement engine | P0 | PLAN-002 |
-| PLAN-004 | Criticality engine | P0 | PLAN-003 |
+| PLAN-002 | Configurable V1 safety-stock engine and lead-time fallback | P0 | PLAN-001 |
+| PLAN-003 | Planning Availability/net-requirement engine | P0 | PLAN-002 |
+| PLAN-004 | Deterministic ROP-based criticality engine | P0 | PLAN-003 |
 | ML-001 | Forecast baseline | P0 | DATA-002 |
 | ML-002 | Time-aware backtesting | P0 | ML-001 |
 | ML-003 | Candidate model framework | P1 | ML-002 |
@@ -62,7 +62,7 @@ Each ticket implementation must reference only the relevant specifications, incl
 |---|---|---|---|
 | REP-002 | Consolidated XLSX/CSV report export | P1 | REP-001, API-001 |
 | REP-003 | Secure asynchronous export/download workflow | P1 | REP-002, OPS-001 |
-| SAP-001 | Outbound SAP adapter contract | P1 | DATA-004 |
+| SAP-001 | Outbound SAP adapter contract and mock-mode integration | P1 | DATA-004 |
 | SAP-002 | Approved SAP write-back workflow | P1 | SAP-001, ALLOC-003 |
 | SAP-003 | SAP idempotency, acknowledgement, retry and audit | P1 | SAP-002, OBS-001 |
 | QA-004 | Export and SAP write-back integration/security tests | P0 | REP-003, SAP-003 |

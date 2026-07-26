@@ -27,6 +27,8 @@ Protect:
 - imports;
 - forecasting fallback;
 - vendor communication status.
+- ROP-based Planning Availability and Critical/Warning/Healthy boundaries, including no-double-subtraction cases.
+- safety-stock class defaults, configurable rolling windows and lead-time fallback/data-quality flags.
 
 ## 3. Regression Rule
 Every reproducible bug fix should add a regression test.
@@ -80,3 +82,4 @@ Test SAP write-back for:
 - permanent failure handling and notifications;
 - audit events;
 - confirmation that forecast/ML output cannot directly trigger an unauthorized write.
+- mock-adapter contract compatibility so a real adapter can replace it without changing planning logic.
