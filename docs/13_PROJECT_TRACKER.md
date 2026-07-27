@@ -22,7 +22,7 @@ Status values: `NOT STARTED`, `IN PROGRESS`, `BLOCKED`, `DONE`.
 
 | Reporting/Jobs | DONE | Phase 9: Consolidated CSV and openpyxl XLSX export service, filters, and frontend Reports Center |
 | Operational Jobs | DONE | Phase 10: PostgreSQL JobRun persistence (migration 005), job lifecycle, concurrency locking, retry API, durable report artifacts |
-| Release Candidate | NOT STARTED | Scheduled for Phase 11 |
+| QA & Release Hardening | DONE | Phase 11: Production config safety, RBAC matrix, calculation regression, zero act(...) warnings, clean git diff |
 
 ## Known Decisions
 - PostgreSQL retained.

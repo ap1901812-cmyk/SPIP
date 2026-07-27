@@ -6,6 +6,12 @@ Use semantic versions where practical.
 
 ## [Unreleased]
 ### Added
+- Phase 11 QA, Security & Release Hardening (`QA-001` through `QA-004`, `REL-001`).
+- Enforced production security validation (`validate_production_settings`) in `Settings` to prevent silent execution with default development secret keys when `APP_ENV=production`.
+- Disabled OpenAPI interactive documentation URLs in production mode (`openapi_url=None`).
+- Dedicated release hardening test suite (`test_release_hardening.py`) verifying production security rules, complete RBAC matrix across all 4 roles (Admin, Planner, Manager, Read-only), and business calculation integrity ($SS$, $AI$, $ROP$, Criticalities).
+- Fixed React Testing Library `act(...)` warning in `DashboardPage.test.tsx` via asynchronous DOM queries (`findByRole`, `findByText`).
+- Verified zero whitespace errors via `git diff --check`.
 - Phase 10 Operational Jobs & Reliability (`OPS-001`, `OPS-002`, `OPS-003`).
 - Durable `JobRun` ORM model (`job_runs` table) and Alembic migration `005_jobs_schema.py`.
 - Operational Job management service (`app/services/jobs.py`) supporting `REPORT_EXPORT`, `SAP_SYNC`, `FORECAST_GENERATE`, and `PLANNING_RECALC` background job types with state transitions (`PENDING`, `RUNNING`, `COMPLETED`, `FAILED`), error tracking, and retry workflow (`retry_job`).

@@ -3,7 +3,7 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Annotated, Literal
 
-from pydantic import AnyHttpUrl, Field, PostgresDsn, field_validator
+from pydantic import AnyHttpUrl, Field, PostgresDsn, field_validator, model_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 
@@ -45,6 +45,19 @@ class Settings(BaseSettings):
         if isinstance(value, str):
             return [origin.strip() for origin in value.split(",") if origin.strip()]
         return value
+
+    @model_validator(mode="after")
+    def validate_production_settings(self) -> Settings:
+        if self.app_env == "production" and self.secret_key.startswith("dev_secret_key"):
+            msg = (
+                "In production mode (APP_ENV=production), "
+                "a custom strong SECRET_KEY must be provided."
+            )
+            raise ValueError(msg)
+        return self
+
+
+
 
     @property
     def openapi_url(self) -> str | None:

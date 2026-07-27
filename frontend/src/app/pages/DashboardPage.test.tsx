@@ -16,7 +16,7 @@ test("renders dashboard heading and metrics grid", async () => {
     </QueryClientProvider>
   );
 
-  expect(screen.getByRole("heading", { name: /Inventory Planning Dashboard/i })).toBeInTheDocument();
-  expect(screen.getByText(/Total Materials/i)).toBeInTheDocument();
-  expect(screen.getByText(/Critical Items/i)).toBeInTheDocument();
+  expect(await screen.findByRole("heading", { name: /Inventory Planning Dashboard/i })).toBeInTheDocument();
+  expect(await screen.findByText(/Total Materials/i)).toBeInTheDocument();
+  expect(await screen.findByText(/Critical Items/i)).toBeInTheDocument();
 });
