@@ -16,21 +16,14 @@ import type {
 
 export const authApi = {
   login: async (email: string, password: string): Promise<LoginResponse> => {
-
-    const formData = new URLSearchParams();
-    formData.append("username", email);
-    formData.append("password", password);
-
     const res = await fetchApi<LoginResponse>("/auth/login", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: formData.toString(),
+      body: JSON.stringify({ email, password }),
     });
     setToken(res.access_token);
     return res;
   },
+
 
   getCurrentUser: async (): Promise<UserProfile> => {
     return fetchApi<UserProfile>("/auth/me");

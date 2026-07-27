@@ -46,10 +46,16 @@ export async function fetchApi<T>(
     headers["Content-Type"] = "application/json";
   }
 
-  const response = await fetch(`${env.apiBaseUrl}${path}`, {
-    ...options,
-    headers,
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${env.apiBaseUrl}${path}`, {
+      ...options,
+      headers,
+    });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Unable to reach API server.";
+    throw new ApiError(0, msg, "NETWORK_ERROR");
+  }
 
   if (response.status === 401) {
     if (onUnauthorizedCallback) {
@@ -64,17 +70,17 @@ export async function fetchApi<T>(
       code?: string;
     } | null;
 
-    let msg = "Unable to complete request.";
-    if (typeof payload?.detail === "string") {
-      msg = payload.detail;
-    } else if (Array.isArray(payload?.detail) && payload.detail.length > 0) {
+    let msg = payload?.message || (typeof payload?.detail === "string" ? payload.detail : undefined);
+    if (!msg && Array.isArray(payload?.detail) && payload.detail.length > 0) {
       msg = payload.detail.map((d) => d.msg).join(", ");
-    } else if (payload?.message) {
-      msg = payload.message;
+    }
+    if (!msg) {
+      msg = `Request failed with status ${response.status}`;
     }
 
     throw new ApiError(response.status, msg, payload?.code);
   }
+
 
   if (response.status === 24) {
     return {} as T;
