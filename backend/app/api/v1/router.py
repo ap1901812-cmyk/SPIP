@@ -12,6 +12,7 @@ from app.api.v1.routes.notifications import router as notifications_router
 from app.api.v1.routes.planning import router as planning_router
 from app.api.v1.routes.plants import router as plants_router
 from app.api.v1.routes.purchase_orders import router as po_router
+from app.api.v1.routes.reports import router as reports_router
 from app.api.v1.routes.sap import router as sap_router
 from app.api.v1.routes.vendors import router as vendors_router
 
@@ -30,3 +31,4 @@ api_router.include_router(planning_router)
 api_router.include_router(forecasting_router)
 api_router.include_router(allocations_router)
 api_router.include_router(notifications_router)
+api_router.include_router(reports_router)

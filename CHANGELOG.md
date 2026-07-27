@@ -6,6 +6,14 @@ Use semantic versions where practical.
 
 ## [Unreleased]
 ### Added
+- Phase 9 Reporting & Export Engine (`REP-001`, `REP-002`, `REP-003`).
+- Reporting service (`app/services/reporting.py`) reusing authoritative backend calculation engines (`evaluate_material_planning`, `generate_demand_forecast`, allocation queries) for `planning_summary`, `forecast_summary`, and `allocations` datasets.
+- Standards-compliant UTF-8 CSV exporter (`build_csv_export`) and Excel workbook exporter (`build_xlsx_export` via `openpyxl`) with header styling and memory buffer streaming.
+- Filter capabilities (`plant_code`, `material_code`, `criticality_status`, `status`) with error validation.
+- REST reporting API routes (`GET /api/v1/reports`, `POST /api/v1/reports/exports`, `GET /api/v1/reports/exports/{export_id}/download`, `GET /api/v1/reports/download`).
+- Phase 9 asynchronous export job boundary (`_export_cache` registry with job token security isolation).
+- Dedicated frontend Reports & Exports Center (`ReportsPage.tsx`, sidebar nav item).
+- Comprehensive reporting backend test suite (`test_reporting.py`).
 - Phase 7 Notifications Engine (`NOTIF-001`, `NOTIF-002`, `FE-006`).
 - In-app `Notification` database model and Alembic migration `004_notifications_schema.py`.
 - Notification service (`app/services/notification/service.py`) supporting unread count, pagination, user recipient isolation, and mark read/all-read operations.

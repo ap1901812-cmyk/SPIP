@@ -20,7 +20,7 @@ Status values: `NOT STARTED`, `IN PROGRESS`, `BLOCKED`, `DONE`.
 | Notifications | DONE | In-app persistent notification model, API, RBAC isolation, business event triggers, and SMTP/mock email adapter |
 | Frontend | DONE | Enterprise Red & White UI, AuthContext, Dashboard, Planning Detail, Forecasting, Allocations & Manager Queue |
 
-| Reporting/Jobs | NOT STARTED | |
+| Reporting/Jobs | DONE | Consolidated CSV and openpyxl XLSX export service, filters, async job boundary, and frontend Reports Center |
 | Scale/Hardening | NOT STARTED | Includes load balancing |
 | Release Candidate | NOT STARTED | |
 

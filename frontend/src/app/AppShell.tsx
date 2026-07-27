@@ -129,6 +129,15 @@ export function AppShell() {
           </NavLink>
 
           <NavLink
+            to="/reports"
+            className={({ isActive }) =>
+              `sidebar-nav-item ${isActive ? "active" : ""}`
+            }
+          >
+            Reports & Exports
+          </NavLink>
+
+          <NavLink
             to="/ingestion"
             className={({ isActive }) =>
               `sidebar-nav-item ${isActive ? "active" : ""}`

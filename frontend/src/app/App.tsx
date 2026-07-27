@@ -13,6 +13,7 @@ import { LoginPage } from "./pages/LoginPage";
 import { ManagerApprovalPage } from "./pages/ManagerApprovalPage";
 import { NotificationsPage } from "./pages/NotificationsPage";
 import { PlanningDetailPage } from "./pages/PlanningDetailPage";
+import { ReportsPage } from "./pages/ReportsPage";
 
 import { queryClient } from "./query-client";
 
@@ -57,6 +58,7 @@ export function App() {
               <Route path="allocations" element={<AllocationsPage />} />
               <Route path="approvals" element={<ManagerApprovalPage />} />
               <Route path="notifications" element={<NotificationsPage />} />
+              <Route path="reports" element={<ReportsPage />} />
               <Route path="ingestion" element={<IngestionPage />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Route>
@@ -66,6 +68,7 @@ export function App() {
     </QueryClientProvider>
   );
 }
+
 
 
 export default App;

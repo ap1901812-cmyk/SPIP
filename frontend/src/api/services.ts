@@ -187,3 +187,44 @@ export const notificationsApi = {
     return fetchApi<{ unread_count: number }>("/notifications/mark-all-read", { method: "POST" });
   },
 };
+
+export const reportsApi = {
+  getPreview: (
+    reportType = "planning_summary",
+    plantCode?: string,
+    materialCode?: string,
+    criticalityStatus?: string,
+    status?: string
+  ) => {
+    const params = new URLSearchParams();
+    params.append("report_type", reportType);
+    if (plantCode) params.append("plant_code", plantCode);
+    if (materialCode) params.append("material_code", materialCode);
+    if (criticalityStatus) params.append("criticality_status", criticalityStatus);
+    if (status) params.append("status", status);
+    return fetchApi<{ title: string; headers: string[]; rows: (string | number)[][]; total_records: number }>(
+      `/reports?${params.toString()}`
+    );
+  },
+
+  requestExport: (payload: {
+    report_type: string;
+    format: "csv" | "xlsx";
+    plant_code?: string;
+    material_code?: string;
+    criticality_status?: string;
+    status?: string;
+  }) => {
+    return fetchApi<{
+      export_id: string;
+      report_type: string;
+      format: string;
+      status: string;
+      created_at: string;
+      download_url: string;
+    }>("/reports/exports", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+};
