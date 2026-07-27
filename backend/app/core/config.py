@@ -3,7 +3,7 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Annotated, Literal
 
-from pydantic import AnyHttpUrl, Field, PostgresDsn, field_validator, model_validator
+from pydantic import Field, PostgresDsn, field_validator, model_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 
@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     app_env: Literal["development", "test", "staging", "production"] = "development"
     app_debug: bool = False
     api_v1_prefix: str = "/api/v1"
-    allowed_origins: Annotated[list[AnyHttpUrl], NoDecode] = Field(default_factory=list)
+    allowed_origins: Annotated[list[str], NoDecode] = Field(default_factory=list)
     max_request_body_bytes: int = Field(default=1_048_576, ge=1, le=52_428_800)
     database_url: PostgresDsn
     secret_key: str = Field(
@@ -36,15 +36,15 @@ class Settings(BaseSettings):
     smtp_use_tls: bool = False
     email_adapter_mode: Literal["mock", "smtp"] = "mock"
 
-
-
-
     @field_validator("allowed_origins", mode="before")
     @classmethod
     def parse_allowed_origins(cls, value: object) -> object:
         if isinstance(value, str):
-            return [origin.strip() for origin in value.split(",") if origin.strip()]
+            return [origin.strip().rstrip("/") for origin in value.split(",") if origin.strip()]
+        if isinstance(value, list):
+            return [str(origin).strip().rstrip("/") for origin in value if origin]
         return value
+
 
     @model_validator(mode="after")
     def validate_production_settings(self) -> Settings:

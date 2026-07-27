@@ -16,6 +16,10 @@ os.environ.setdefault("APP_ENV", "test")
 os.environ.setdefault(
     "SECRET_KEY", "test_secret_key_min_32_bytes_long_string_for_testing_only"
 )
+os.environ.setdefault("ALLOWED_ORIGINS", "http://localhost:5173")
+
+
+
 
 from app.api.deps import get_db  # noqa: E402
 from app.core.ratelimit import MemoryRateLimiter  # noqa: E402

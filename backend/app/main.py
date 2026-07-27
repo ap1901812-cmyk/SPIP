@@ -30,11 +30,12 @@ app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(RequestContextMiddleware, settings=settings)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[str(origin) for origin in settings.allowed_origins],
+    allow_origins=[origin.rstrip("/") for origin in settings.allowed_origins],
     allow_credentials=False,
-    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["Accept", "Authorization", "Content-Type", "X-Request-ID"],
 )
+
 
 
 def request_id_from(request: Request) -> str:

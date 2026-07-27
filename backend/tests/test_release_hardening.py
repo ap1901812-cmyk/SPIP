@@ -56,6 +56,18 @@ def test_production_configuration_safety():
     assert prod_settings.openapi_url is None
 
 
+def test_cors_preflight_login_allowed_origin(client):
+    headers = {
+        "Origin": "http://localhost:5173",
+        "Access-Control-Request-Method": "POST",
+        "Access-Control-Request-Headers": "content-type",
+    }
+    response = client.options("/api/v1/auth/login", headers=headers)
+    assert response.status_code == 200
+    assert response.headers.get("access-control-allow-origin") == "http://localhost:5173"
+
+
+
 def test_rbac_matrix_enforcement(client, db_session: Session):
     _seed_user(db_session, "rel_admin@spip.local", RoleEnum.ADMIN.value)
     planner = _seed_user(db_session, "rel_planner@spip.local", RoleEnum.PLANNER.value)
