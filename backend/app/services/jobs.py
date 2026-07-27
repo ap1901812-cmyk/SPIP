@@ -91,7 +91,7 @@ def list_jobs(
 def execute_job(db: Session, job_id: str) -> JobRun:
     """Executes a job deterministically with state transitions and concurrency safety."""
     # Atomic claim / status check to prevent overlapping concurrent executions
-    job = db.query(JobRun).filter(JobRun.job_id == job_id).with_for_update().first()
+    job = db.query(JobRun).filter(JobRun.job_id == job_id).with_for_update(of=JobRun).first()
     if not job:
         raise JobError(f"Job with ID '{job_id}' not found.", 404)
 

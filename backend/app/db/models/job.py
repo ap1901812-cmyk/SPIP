@@ -32,4 +32,4 @@ class JobRun(Base):
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
-    user: Mapped[User | None] = relationship("User", lazy="joined")
+    user: Mapped[User | None] = relationship("User", lazy="select")
