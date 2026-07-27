@@ -18,7 +18,8 @@ Status values: `NOT STARTED`, `IN PROGRESS`, `BLOCKED`, `DONE`.
 
 | Allocation/Approval | DONE | V1 lifecycle (DRAFT, PENDING_APPROVAL, APPROVED, REJECTED), current-edit exclusion & Manager approval |
 | Notifications | NOT STARTED | In-app + SMTP |
-| Frontend | NOT STARTED | Preserve workflow; improve red/white UI |
+| Frontend | DONE | Enterprise Red & White UI, AuthContext, Dashboard, Planning Detail, Forecasting, Allocations & Manager Queue |
+
 | Reporting/Jobs | NOT STARTED | |
 | Scale/Hardening | NOT STARTED | Includes load balancing |
 | Release Candidate | NOT STARTED | |

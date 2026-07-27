@@ -1,8 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import { App } from "./App";
 
-test("renders the foundation shell", () => {
+test("renders SPIP login screen by default when unauthenticated", () => {
   render(<App />);
-  expect(screen.getByRole("heading", { name: /foundation ready/i })).toBeInTheDocument();
-  expect(screen.getByText("Skip to main content")).toHaveAttribute("href", "#main-content");
+  expect(screen.getByRole("heading", { name: /SPIP V1/i })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: /Sign In to SPIP/i })).toBeInTheDocument();
 });

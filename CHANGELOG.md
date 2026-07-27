@@ -6,7 +6,20 @@ Use semantic versions where practical.
 
 ## [Unreleased]
 ### Added
+- V1 Core Frontend + Backend Integration (`frontend/` connected to FastAPI endpoints).
+- Enterprise Red & White Visual Design System (`src/styles/index.css`) with responsive layout, metric cards, status pills (`CRITICAL`, `WARNING`, `HEALTHY`), and modal dialogs.
+- `AuthContext` & `useAuth` hook providing token storage in `localStorage`, `GET /auth/me` user profile sync, protected application routing, 401 handling, and role checks (`hasRole()`).
+- `LoginPage` with credentials form and Quick Demo Preset buttons (Planner, Manager, Admin).
+- `AppShell` with top header, current user & role badges, plant context filter, and sidebar navigation.
+- `DashboardPage` featuring plant filter, summary metric cards (Total, Critical, Warning, Healthy), and interactive material planning table.
+- `PlanningDetailPage` presenting all 17 audit trace components ($D, \sigma_d, LT, Z, SS, AI, ROP$, physical stock breakdown, incoming PO, committed allocations, and deterministic criticality rationale).
+- `ForecastingPage` displaying candidate model metadata (`selected_model`, `evaluation_metric_value` WMAPE), historical window, fallback indicator, and day-by-day point forecast bar chart & table.
+- `AllocationsPage` supporting real-time capacity checking against `Planning Availability`, allocation creation/editing, optimistic concurrency locking (`version`), and submission for approval.
+- `ManagerApprovalPage` providing approval queue with outbound SAP write-back integration, mandatory rejection reason modal, and RBAC enforcement.
+- `IngestionPage` enabling CSV/XLSX file uploads (`consumption`, `inventory`) and triggering full SAP adapter sync.
+- Frontend test suite (`App.test.tsx`, `DashboardPage.test.tsx`) covering login rendering, protected routing, and dashboard metrics.
 - Phase 6 Allocation & Manager Approval workflow (`ALLOC-001` through `ALLOC-003`, `SAP-002`, `SAP-003`).
+
 - Database model `Allocation` (`DRAFT`, `PENDING_APPROVAL`, `APPROVED`, `REJECTED`) and Alembic migration `003_allocations_schema.py`.
 - Allocation service layer (`app/services/allocation.py`) enforcing capacity checks, optimistic concurrency locking (`version`), state transitions, and audit logging.
 - **Current-Edit Exclusion Rule:** Implemented capacity validation during edits excluding current allocation instance to prevent double-subtraction false positives.
