@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import json
 from datetime import datetime
-from typing import Annotated, Any
-from uuid import uuid4
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import Response
@@ -15,6 +15,7 @@ from app.schemas.reporting import (
     ReportDatasetResponseSchema,
     ReportExportRequestSchema,
 )
+from app.services.jobs import create_job, execute_job, get_job_by_id
 from app.services.reporting import (
     VALID_FORMATS,
     ReportingError,
@@ -24,9 +25,6 @@ from app.services.reporting import (
 )
 
 router = APIRouter(prefix="/reports", tags=["reports"])
-
-# In-memory registry for generated export jobs (REP-001/REP-003 boundary)
-_export_cache: dict[str, dict[str, Any]] = {}
 
 
 @router.get("", response_model=ReportDatasetResponseSchema)
@@ -59,46 +57,33 @@ def api_request_export(
     if req.format.lower() not in VALID_FORMATS:
         raise ReportingError(f"Unsupported format '{req.format}'. Valid formats: csv, xlsx.", 400)
 
-    title, headers, rows = get_report_dataset(
-        db,
-        req.report_type,
-        req.plant_code,
-        req.material_code,
-        req.criticality_status,
-        req.status,
-    )
-
-    timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
-    clean_title = title.lower().replace(" ", "_")
-    ext = req.format.lower()
-    filename = f"{clean_title}_{timestamp_str}.{ext}"
-
-    if ext == "xlsx":
-        content_bytes = build_xlsx_export(title, headers, rows)
-        media_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    else:
-        content_bytes = build_csv_export(headers, rows)
-        media_type = "text/csv; charset=utf-8"
-
-    export_id = f"EXP-{uuid4().hex[:8].upper()}"
-    download_url = f"/api/v1/reports/exports/{export_id}/download"
-
-    _export_cache[export_id] = {
-        "user_id": current_user.id,
-        "filename": filename,
-        "media_type": media_type,
-        "content_bytes": content_bytes,
-        "created_at": datetime.now().isoformat(),
+    payload = {
         "report_type": req.report_type,
-        "format": ext,
+        "format": req.format.lower(),
+        "plant_code": req.plant_code,
+        "material_code": req.material_code,
+        "criticality_status": req.criticality_status,
+        "status": req.status,
     }
 
+    # Create durable PostgreSQL JobRun record (Phase 10 durable export job workflow)
+    job = create_job(
+        db,
+        job_type="REPORT_EXPORT",
+        user_id=current_user.id,
+        payload=payload,
+        custom_job_id_prefix="EXP",
+    )
+    job = execute_job(db, job.job_id)
+
+    download_url = f"/api/v1/reports/exports/{job.job_id}/download"
+
     return ExportJobResponseSchema(
-        export_id=export_id,
+        export_id=job.job_id,
         report_type=req.report_type,
-        format=ext,
-        status="COMPLETED",
-        created_at=datetime.now().isoformat(),
+        format=req.format.lower(),
+        status=job.status,
+        created_at=job.created_at.isoformat(),
         download_url=download_url,
     )
 
@@ -106,19 +91,25 @@ def api_request_export(
 @router.get("/exports/{export_id}/download")
 def api_download_export(
     export_id: str,
+    db: Annotated[Session, Depends(get_db)],
     current_user: Annotated[User, Depends(get_current_user)],
 ) -> Response:
-    job = _export_cache.get(export_id)
-    if not job:
-        raise ReportingError(f"Export job with ID '{export_id}' not found.", 404)
+    job = get_job_by_id(db, export_id)
 
-    if job["user_id"] != current_user.id:
+    if job.user_id != current_user.id:
         raise ReportingError("Access denied to requested report export.", 403)
 
+    if not job.binary_artifact:
+        raise ReportingError(f"Export artifact for job '{export_id}' is empty or unavailable.", 404)
+
+    meta = json.loads(job.result_json) if job.result_json else {}
+    filename = meta.get("filename", f"{export_id}.dat")
+    media_type = meta.get("media_type", "application/octet-stream")
+
     return Response(
-        content=job["content_bytes"],
-        media_type=job["media_type"],
-        headers={"Content-Disposition": f'attachment; filename="{job["filename"]}"'},
+        content=job.binary_artifact,
+        media_type=media_type,
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
 
 

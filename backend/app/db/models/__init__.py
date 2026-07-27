@@ -12,6 +12,7 @@ from app.db.models.domain import (
     Vendor,
     VendorMaterial,
 )
+from app.db.models.job import JobRun
 from app.db.models.notification import Notification
 from app.db.models.user import RoleEnum, User, UserRole
 
@@ -21,6 +22,7 @@ __all__ = [
     "AuditLog",
     "ConsumptionHistory",
     "InventorySnapshot",
+    "JobRun",
     "Material",
     "Notification",
     "Plant",

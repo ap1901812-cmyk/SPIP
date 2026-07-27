@@ -1,4 +1,4 @@
-# 13 â€” Project Tracker
+# 13 Ã¢â‚¬â€ Project Tracker
 
 ## SPIP
 
@@ -20,9 +20,9 @@ Status values: `NOT STARTED`, `IN PROGRESS`, `BLOCKED`, `DONE`.
 | Notifications | DONE | In-app persistent notification model, API, RBAC isolation, business event triggers, and SMTP/mock email adapter |
 | Frontend | DONE | Enterprise Red & White UI, AuthContext, Dashboard, Planning Detail, Forecasting, Allocations & Manager Queue |
 
-| Reporting/Jobs | DONE | Consolidated CSV and openpyxl XLSX export service, filters, async job boundary, and frontend Reports Center |
-| Scale/Hardening | NOT STARTED | Includes load balancing |
-| Release Candidate | NOT STARTED | |
+| Reporting/Jobs | DONE | Phase 9: Consolidated CSV and openpyxl XLSX export service, filters, and frontend Reports Center |
+| Operational Jobs | DONE | Phase 10: PostgreSQL JobRun persistence (migration 005), job lifecycle, concurrency locking, retry API, durable report artifacts |
+| Release Candidate | NOT STARTED | Scheduled for Phase 11 |
 
 ## Known Decisions
 - PostgreSQL retained.
@@ -32,7 +32,7 @@ Status values: `NOT STARTED`, `IN PROGRESS`, `BLOCKED`, `DONE`.
 - SAP + Excel/CSV data ingestion.
 - SMTP email plus in-app notifications.
 - Demo enterprise-grade deployment; no organization name in product documentation.
-- Historical demand availability initially assumed around 2â€“6 months.
+- Historical demand availability initially assumed around 2Ã¢â‚¬â€œ6 months.
 - Planning Availability and deterministic ROP-based criticality are approved.
 - Safety-stock V1 uses configurable ABC-class defaults and lead-time fallback.
 - Demo SAP mode uses a mock adapter; real SAP connectivity is deferred.

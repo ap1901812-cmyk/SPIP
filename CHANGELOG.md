@@ -6,6 +6,13 @@ Use semantic versions where practical.
 
 ## [Unreleased]
 ### Added
+- Phase 10 Operational Jobs & Reliability (`OPS-001`, `OPS-002`, `OPS-003`).
+- Durable `JobRun` ORM model (`job_runs` table) and Alembic migration `005_jobs_schema.py`.
+- Operational Job management service (`app/services/jobs.py`) supporting `REPORT_EXPORT`, `SAP_SYNC`, `FORECAST_GENERATE`, and `PLANNING_RECALC` background job types with state transitions (`PENDING`, `RUNNING`, `COMPLETED`, `FAILED`), error tracking, and retry workflow (`retry_job`).
+- Replaced Phase 9 in-memory `_export_cache` boundary with durable PostgreSQL `JobRun.binary_artifact` storage, guaranteeing report export artifacts survive backend process restarts.
+- Concurrency & idempotency protection using database row locking (`with_for_update`) to prevent duplicate overlapping job executions.
+- REST operational jobs API routes (`POST /api/v1/jobs`, `GET /api/v1/jobs`, `GET /api/v1/jobs/{job_id}`, `POST /api/v1/jobs/{job_id}/retry`).
+- Focused backend test suite (`test_jobs.py`) proving job lifecycle, PostgreSQL artifact persistence, concurrency locking, and retry handling.
 - Phase 9 Reporting & Export Engine (`REP-001`, `REP-002`, `REP-003`).
 - Reporting service (`app/services/reporting.py`) reusing authoritative backend calculation engines (`evaluate_material_planning`, `generate_demand_forecast`, allocation queries) for `planning_summary`, `forecast_summary`, and `allocations` datasets.
 - Standards-compliant UTF-8 CSV exporter (`build_csv_export`) and Excel workbook exporter (`build_xlsx_export` via `openpyxl`) with header styling and memory buffer streaming.
