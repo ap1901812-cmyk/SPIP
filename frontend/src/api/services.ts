@@ -168,3 +168,22 @@ export const ingestionApi = {
     return fetchApi("/sap/sync", { method: "POST" });
   },
 };
+
+export const notificationsApi = {
+  getNotifications: (unreadOnly = false, limit = 50, offset = 0) => {
+    const q = `?unread_only=${unreadOnly}&limit=${limit}&offset=${offset}`;
+    return fetchApi<{ items: import("./types").NotificationItem[]; total: number }>(`/notifications${q}`);
+  },
+
+  getUnreadCount: () => {
+    return fetchApi<{ unread_count: number }>("/notifications/unread-count");
+  },
+
+  markAsRead: (id: number) => {
+    return fetchApi<import("./types").NotificationItem>(`/notifications/${id}/read`, { method: "PATCH" });
+  },
+
+  markAllAsRead: () => {
+    return fetchApi<{ unread_count: number }>("/notifications/mark-all-read", { method: "POST" });
+  },
+};

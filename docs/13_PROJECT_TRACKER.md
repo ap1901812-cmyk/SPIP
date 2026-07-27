@@ -17,7 +17,7 @@ Status values: `NOT STARTED`, `IN PROGRESS`, `BLOCKED`, `DONE`.
 | Forecasting/ML | DONE | Time-aware backtesting framework, candidate model selection & fallback |
 
 | Allocation/Approval | DONE | V1 lifecycle (DRAFT, PENDING_APPROVAL, APPROVED, REJECTED), current-edit exclusion & Manager approval |
-| Notifications | NOT STARTED | In-app + SMTP |
+| Notifications | DONE | In-app persistent notification model, API, RBAC isolation, business event triggers, and SMTP/mock email adapter |
 | Frontend | DONE | Enterprise Red & White UI, AuthContext, Dashboard, Planning Detail, Forecasting, Allocations & Manager Queue |
 
 | Reporting/Jobs | NOT STARTED | |

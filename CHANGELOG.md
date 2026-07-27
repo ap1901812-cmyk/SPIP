@@ -6,6 +6,14 @@ Use semantic versions where practical.
 
 ## [Unreleased]
 ### Added
+- Phase 7 Notifications Engine (`NOTIF-001`, `NOTIF-002`, `FE-006`).
+- In-app `Notification` database model and Alembic migration `004_notifications_schema.py`.
+- Notification service (`app/services/notification/service.py`) supporting unread count, pagination, user recipient isolation, and mark read/all-read operations.
+- Configurable SMTP / Mock Email Adapter boundary (`app/services/notification/email.py`) with secret isolation, deterministic local development mock mode, and graceful SMTP transport fallback.
+- REST notification endpoints (`GET /api/v1/notifications`, `GET /api/v1/notifications/unread-count`, `PATCH /api/v1/notifications/{id}/read`, `POST /api/v1/notifications/mark-all-read`).
+- Business event integration wiring notifications into allocation lifecycle events: `submit_allocation` (notifies Managers/Approvers & Admins), `approve_allocation` (notifies Planner), `reject_allocation` (notifies Planner with reason).
+- Lightweight frontend Notification Center (`NotificationsPage.tsx`, navbar bell indicator with unread badge in `AppShell.tsx`, sidebar nav link).
+- Comprehensive notification backend test suite (`test_notifications.py`).
 - V1 Core Frontend + Backend Integration (`frontend/` connected to FastAPI endpoints).
 - Enterprise Red & White Visual Design System (`src/styles/index.css`) with responsive layout, metric cards, status pills (`CRITICAL`, `WARNING`, `HEALTHY`), and modal dialogs.
 - `AuthContext` & `useAuth` hook providing token storage in `localStorage`, `GET /auth/me` user profile sync, protected application routing, 401 handling, and role checks (`hasRole()`).

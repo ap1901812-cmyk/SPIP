@@ -14,8 +14,9 @@ from app.db.models.domain import (
     Plant,
     Vendor,
 )
-from app.db.models.user import User
+from app.db.models.user import RoleEnum, User, UserRole
 from app.schemas.allocation import AllocationCreateSchema, AllocationUpdateSchema
+from app.services.notification.service import create_notification
 from app.services.planning.availability import calculate_planning_availability
 from app.services.sap import get_sap_adapter
 
@@ -88,7 +89,6 @@ def create_allocation(
                 f"{schema.allocated_quantity} {schema.uom}"
             )
         },
-
     )
     db.add(audit)
     db.commit()
@@ -198,6 +198,28 @@ def submit_allocation(
         },
     )
     db.add(audit)
+
+    # Notify managers/approvers and admins
+    approvers = (
+        db.query(User)
+        .join(UserRole)
+        .filter(UserRole.role_name.in_([RoleEnum.MANAGER_APPROVER.value, RoleEnum.ADMIN.value]))
+        .all()
+    )
+    for manager in approvers:
+        create_notification(
+            db=db,
+            recipient_user_id=manager.id,
+            notification_type="ALLOCATION_PENDING_APPROVAL",
+            title=f"Allocation Pending Approval: {allocation.allocation_number}",
+            message=(
+                f"Allocation {allocation.allocation_number} for material "
+                f"{allocation.material.code if allocation.material else ''} requires approval."
+            ),
+            resource_type="allocations",
+            resource_id=str(allocation.id),
+        )
+
     db.commit()
     db.refresh(allocation)
     return allocation
@@ -248,6 +270,21 @@ def approve_allocation(
         },
     )
     db.add(audit)
+
+    # Notify allocation creator
+    create_notification(
+        db=db,
+        recipient_user_id=allocation.created_by_user_id,
+        notification_type="ALLOCATION_APPROVED",
+        title=f"Allocation Approved: {allocation.allocation_number}",
+        message=(
+            f"Your allocation {allocation.allocation_number} has been approved by "
+            f"{approver_user.full_name} (SAP Ref: {allocation.sap_reference_id})."
+        ),
+        resource_type="allocations",
+        resource_id=str(allocation.id),
+    )
+
     db.commit()
     db.refresh(allocation)
     return allocation
@@ -284,6 +321,21 @@ def reject_allocation(
         },
     )
     db.add(audit)
+
+    # Notify allocation creator
+    create_notification(
+        db=db,
+        recipient_user_id=allocation.created_by_user_id,
+        notification_type="ALLOCATION_REJECTED",
+        title=f"Allocation Rejected: {allocation.allocation_number}",
+        message=(
+            f"Your allocation {allocation.allocation_number} was rejected by "
+            f"{approver_user.full_name}. Reason: {rejection_reason}"
+        ),
+        resource_type="allocations",
+        resource_id=str(allocation.id),
+    )
+
     db.commit()
     db.refresh(allocation)
     return allocation

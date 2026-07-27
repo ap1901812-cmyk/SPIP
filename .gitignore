@@ -53,3 +53,4 @@ uploads/
 
 # Docker local overrides
 docker-compose.override.yml
+scratch/

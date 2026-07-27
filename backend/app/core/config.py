@@ -27,6 +27,15 @@ class Settings(BaseSettings):
     sap_adapter_mode: Literal["mock", "real"] = "mock"
     planning_statistics_window_days: int = Field(default=30, ge=1, le=365)
     planning_decision_horizon_days: int = Field(default=30, ge=1, le=365)
+    smtp_enabled: bool = False
+    smtp_host: str = "localhost"
+    smtp_port: int = 1025
+    smtp_user: str | None = None
+    smtp_password: str | None = None
+    smtp_from_email: str = "noreply@spip.local"
+    smtp_use_tls: bool = False
+    email_adapter_mode: Literal["mock", "smtp"] = "mock"
+
 
 
 

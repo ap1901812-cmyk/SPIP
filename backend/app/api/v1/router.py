@@ -8,6 +8,7 @@ from app.api.v1.routes.health import router as health_router
 from app.api.v1.routes.imports import router as imports_router
 from app.api.v1.routes.inventory import router as inventory_router
 from app.api.v1.routes.materials import router as materials_router
+from app.api.v1.routes.notifications import router as notifications_router
 from app.api.v1.routes.planning import router as planning_router
 from app.api.v1.routes.plants import router as plants_router
 from app.api.v1.routes.purchase_orders import router as po_router
@@ -28,3 +29,4 @@ api_router.include_router(sap_router)
 api_router.include_router(planning_router)
 api_router.include_router(forecasting_router)
 api_router.include_router(allocations_router)
+api_router.include_router(notifications_router)

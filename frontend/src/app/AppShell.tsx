@@ -1,11 +1,20 @@
-import { NavLink, Outlet } from "react-router-dom";
-
+import { useEffect, useState } from "react";
+import { Link, NavLink, Outlet } from "react-router-dom";
+import { notificationsApi } from "../api/services";
 import { useAuth } from "./useAuth";
-
 
 export function AppShell() {
   const { user, logout, hasRole } = useAuth();
   const isManagerOrAdmin = hasRole(["Manager/Approver", "Admin"]);
+  const [unreadCount, setUnreadCount] = useState<number>(0);
+
+  useEffect(() => {
+    if (!user) return;
+    notificationsApi
+      .getUnreadCount()
+      .then((res) => setUnreadCount(res.unread_count))
+      .catch(() => {});
+  }, [user]);
 
   return (
     <div className="app-shell">
@@ -19,7 +28,32 @@ export function AppShell() {
         </div>
 
         {user && (
-          <div className="user-profile">
+          <div className="user-profile" style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+            <Link
+              to="/notifications"
+              className="btn btn-secondary"
+              style={{ position: "relative", padding: "0.4rem 0.75rem", fontSize: "0.85rem" }}
+              title="Notifications"
+            >
+              ðŸ””
+              {unreadCount > 0 && (
+                <span
+                  style={{
+                    position: "absolute",
+                    top: "-6px",
+                    right: "-6px",
+                    backgroundColor: "var(--spip-red, #e63946)",
+                    color: "#fff",
+                    borderRadius: "50%",
+                    padding: "2px 6px",
+                    fontSize: "0.7rem",
+                    fontWeight: "bold",
+                  }}
+                >
+                  {unreadCount}
+                </span>
+              )}
+            </Link>
             <div className="user-info">
               <div className="user-name">{user.full_name}</div>
               <div>
@@ -82,7 +116,16 @@ export function AppShell() {
               `sidebar-nav-item ${isActive ? "active" : ""}`
             }
           >
-            Manager Queue {isManagerOrAdmin && <span style={{ color: "var(--spip-red)", fontWeight: "bold" }}>●</span>}
+            Manager Queue {isManagerOrAdmin && <span style={{ color: "var(--spip-red)", fontWeight: "bold" }}>â—</span>}
+          </NavLink>
+
+          <NavLink
+            to="/notifications"
+            className={({ isActive }) =>
+              `sidebar-nav-item ${isActive ? "active" : ""}`
+            }
+          >
+            Notifications {unreadCount > 0 && <span className="badge badge-error" style={{ marginLeft: "0.5rem", fontSize: "0.7rem" }}>{unreadCount}</span>}
           </NavLink>
 
           <NavLink

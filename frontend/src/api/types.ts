@@ -153,3 +153,25 @@ export interface SapStatusResponse {
   is_mock: boolean;
   message: string;
 }
+
+export interface NotificationItem {
+  id: number;
+  user_id: number;
+  notification_type: string;
+  title: string;
+  message: string;
+  resource_type?: string;
+  resource_id?: string;
+  is_read: boolean;
+  read_at?: string;
+  created_at: string;
+}
+
+export interface NotificationListResponse {
+  items: NotificationItem[];
+  total: number;
+}
+
+export interface UnreadCountResponse {
+  unread_count: number;
+}
