@@ -8,7 +8,9 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_current_user, get_db, require_roles
 from app.db.models.user import RoleEnum, User
 from app.schemas.bom import BOMCreate, BOMDetailResponse, BOMResponse, BOMUpdate
+from app.schemas.finished_goods import FGBOMExpansionResponse
 from app.services.bom import BOMService
+from app.services.finished_goods import FinishedGoodsService
 
 router = APIRouter(prefix="/boms", tags=["boms"])
 
@@ -31,6 +33,16 @@ def list_boms(
         is_active=is_active,
     )
     return [BOMDetailResponse.model_validate(b) for b in boms]
+
+
+@router.get("/expansion/{fg_id}", response_model=FGBOMExpansionResponse)
+def get_fg_bom_expansion(
+    fg_id: int,
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> FGBOMExpansionResponse:
+    return FinishedGoodsService.get_fg_bom_expansion(db, fg_id)
+
 
 
 @router.post("", response_model=BOMDetailResponse, status_code=status.HTTP_201_CREATED)

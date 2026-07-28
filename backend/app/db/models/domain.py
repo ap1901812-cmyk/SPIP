@@ -36,6 +36,31 @@ class MaterialTypeEnum(enum.StrEnum):
     RM = "RM"
     PM = "PM"
 
+    @classmethod
+    def normalize(cls, val: str | None) -> str:
+        if not val:
+            return cls.RM.value
+        val_upper = val.strip().upper()
+        if val_upper in ("FG", "FINISHED_GOOD", "FINISHED_GOODS"):
+            return cls.FG.value
+        if val_upper in ("PM", "PACKAGING", "PACKAGING_MATERIAL"):
+            return cls.PM.value
+        if val_upper in ("RM", "RAW_MATERIAL", "RAW_MATERIALS", "CHEMICAL"):
+            return cls.RM.value
+        return val_upper
+
+    @classmethod
+    def is_pm(cls, val: str | None) -> bool:
+        return cls.normalize(val) == cls.PM.value
+
+    @classmethod
+    def is_rm(cls, val: str | None) -> bool:
+        return cls.normalize(val) == cls.RM.value
+
+    @classmethod
+    def is_fg(cls, val: str | None) -> bool:
+        return cls.normalize(val) == cls.FG.value
+
 
 class Plant(Base):
     __tablename__ = "plants"
