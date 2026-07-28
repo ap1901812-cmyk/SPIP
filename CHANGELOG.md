@@ -4,6 +4,31 @@ All notable SPIP changes should be recorded here.
 
 Use semantic versions where practical.
 
+## [1.5.0] - 2026-07-28
+### Added
+- **Finished Goods & Material Classification Domain (Sprint 1)**:
+  - Added `MaterialTypeEnum` (`FG`, `RM`, `PM`) with legacy string normalization helpers.
+  - Defined `BOM` domain model and Alembic database migration (`006_bom_schema.py`).
+  - Implemented `BOMService` CRUD and REST API routes (`/boms`, `/boms/expansion/{fg_id}`).
+- **Finished Goods & Material Dependency Analysis (Sprint 2 & 2.1)**:
+  - Added `FinishedGoodsService` (`GET /finished-goods`, `GET /finished-goods/{id}`, `GET /finished-goods/{id}/bom`).
+  - Added `DependencyService` ("Where-Used" reverse lookup at `GET /materials/{id}/where-used` and `GET /materials/{id}/dependencies`).
+  - Eliminated N+1 query patterns in Finished Goods service using vectorized `GROUP BY` aggregate subqueries ($2N+1 \rightarrow 3$ queries) and eager loading (`joinedload`, `selectinload`).
+- **Finished Goods Driven Planning Engine (Sprint 3)**:
+  - Added stateless planning calculation engine (`fg_engine.py`) implementing BOM demand explosion, net shortage computation with explainable rationale, vendor procurement recommendations with MOQ adjustments, and Finished Goods production feasibility impact analysis.
+  - Added read-only `FGPlanningService` orchestrator and REST endpoints (`POST /planning/run`, `GET /planning/shortages`, `GET /planning/recommendations`).
+- **Frontend Enterprise Planning Workspace (Sprint 4)**:
+  - Created Finished Goods Workspace (`FinishedGoodsPage.tsx`) with search, plant filtering, KPI cards, and detail modal.
+  - Created interactive BOM Explorer (`BOMExplorerPage.tsx`) with categorized RM & PM component expansion modal.
+  - Created Planning Engine Submission Workspace (`PlanningWorkspacePage.tsx`) with interactive execution button, production feasibility impact table, and component requirements table.
+  - Created Shortages & Procurement Recommendation Insights Dashboard (`PlanningInsightsPage.tsx`).
+  - Created Where-Used Dependency Analysis page (`DependencyPage.tsx`).
+  - Extracted reusable UI component library (`KpiCard`, `StatusBadge`, `FilterBar`, `PlanningCharts`, `States`).
+- **Production Hardening & Quality Assurance (Sprint 5)**:
+  - Added comprehensive v1.5 release hardening test suite (`test_v15_release_hardening.py`) verifying full RBAC matrix across all 4 user roles (`Admin`, `Planner`, `Manager/Approver`, `Read-only`), 404 error handling, and end-to-end integration workflows.
+  - Added structured logger instrumentation across planning service and BOM CRUD service.
+  - Verified 100% test pass rate across 98 backend pytest tests and clean production frontend bundle build (`tsc -b && vite build`).
+
 ## [Unreleased]
 ### Added
 - Phase 11 QA, Security & Release Hardening (`QA-001` through `QA-004`, `REL-001`).

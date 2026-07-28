@@ -10,8 +10,8 @@ This document records major updates introduced in SPIP v1.5.
 
 | Version | Date | Description |
 |----------|------|-------------|
-| 1.0 | Initial Release | Core Planning Platform |
-| 1.5 | Current | Enterprise Planning Enhancements |
+| 1.0 | 2026-07-15 | Initial Release – Core Planning Platform |
+| 1.5 | 2026-07-28 | Enterprise Planning Enhancements (FG, BOM, Where-Used, FG Planning Engine) |
 
 ---
 

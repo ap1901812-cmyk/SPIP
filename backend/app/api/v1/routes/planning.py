@@ -5,9 +5,9 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_user, get_db
+from app.api.deps import get_current_user, get_db, require_roles
 from app.db.models.domain import Material, Plant
-from app.db.models.user import User
+from app.db.models.user import RoleEnum, User
 from app.schemas.fg_planning import (
     FGPlanningRequest,
     FGPlanningResult,
@@ -24,9 +24,10 @@ router = APIRouter(prefix="/planning", tags=["planning"])
 def run_fg_planning(
     request: FGPlanningRequest,
     db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(get_current_user)],
+    current_user: Annotated[User, Depends(require_roles(RoleEnum.PLANNER, RoleEnum.ADMIN))],
 ) -> FGPlanningResult:
     return FGPlanningService.run_planning(db, request)
+
 
 
 @router.get("/shortages", response_model=ShortageSummary)

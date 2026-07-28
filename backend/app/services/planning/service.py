@@ -1,10 +1,14 @@
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 from sqlalchemy.orm import Session, joinedload
 
 from app.core.errors import AppError
+
+logger = logging.getLogger(__name__)
+
 from app.db.models.domain import (
     BOM,
     InventorySnapshot,
@@ -189,6 +193,14 @@ class FGPlanningService:
             "procurement_recommendations_count": len(procurement_recs),
             "affected_finished_goods_count": sum(1 for a in affected_fgs if a.risk_status != "HEALTHY"),
         }
+
+        logger.info(
+            "Executed FG Planning Engine run: %d demand items evaluated, %d shortages (%d critical), %d procurement recommendations generated.",
+            summary["total_demand_items_evaluated"],
+            summary["total_components_evaluated"],
+            critical_count,
+            summary["procurement_recommendations_count"],
+        )
 
         return FGPlanningResult(
             summary=summary,
