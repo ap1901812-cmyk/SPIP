@@ -221,3 +221,67 @@ export const reportsApi = {
     });
   },
 };
+
+export const finishedGoodsApi = {
+  getFinishedGoods: (plantId?: number): Promise<import("./types").FinishedGoodSummary[]> => {
+    const q = plantId ? `?plant_id=${plantId}` : "";
+    return fetchApi<import("./types").FinishedGoodSummary[]>(`/finished-goods${q}`);
+  },
+
+  getFinishedGood: (id: number): Promise<import("./types").FinishedGoodDetail> => {
+    return fetchApi<import("./types").FinishedGoodDetail>(`/finished-goods/${id}`);
+  },
+
+  getBOMExpansion: (id: number): Promise<import("./types").FGBOMExpansion> => {
+    return fetchApi<import("./types").FGBOMExpansion>(`/finished-goods/${id}/bom`);
+  },
+};
+
+export const bomApi = {
+  getBOMs: (fgMaterialId?: number, componentMaterialId?: number, isActive?: boolean): Promise<import("./types").BOMItem[]> => {
+    const params = new URLSearchParams();
+    if (fgMaterialId !== undefined) params.append("fg_material_id", String(fgMaterialId));
+    if (componentMaterialId !== undefined) params.append("component_material_id", String(componentMaterialId));
+    if (isActive !== undefined) params.append("is_active", String(isActive));
+    const q = params.toString() ? `?${params.toString()}` : "";
+    return fetchApi<import("./types").BOMItem[]>(`/boms${q}`);
+  },
+
+  getBOM: (id: number): Promise<import("./types").BOMItem> => {
+    return fetchApi<import("./types").BOMItem>(`/boms/${id}`);
+  },
+
+  getExpansion: (fgId: number): Promise<import("./types").FGBOMExpansion> => {
+    return fetchApi<import("./types").FGBOMExpansion>(`/boms/expansion/${fgId}`);
+  },
+};
+
+export const dependencyApi = {
+  getWhereUsed: (materialId: number): Promise<import("./types").WhereUsedResponse> => {
+    return fetchApi<import("./types").WhereUsedResponse>(`/materials/${materialId}/where-used`);
+  },
+
+  getDependencies: (materialId: number): Promise<import("./types").MaterialDependencyResponse> => {
+    return fetchApi<import("./types").MaterialDependencyResponse>(`/materials/${materialId}/dependencies`);
+  },
+};
+
+export const fgPlanningApi = {
+  runPlanning: (request: import("./types").FGPlanningRequest): Promise<import("./types").FGPlanningResult> => {
+    return fetchApi<import("./types").FGPlanningResult>("/planning/run", {
+      method: "POST",
+      body: JSON.stringify(request),
+    });
+  },
+
+  getShortages: (plantCode?: string): Promise<import("./types").ShortageSummary> => {
+    const q = plantCode ? `?plant_code=${encodeURIComponent(plantCode)}` : "";
+    return fetchApi<import("./types").ShortageSummary>(`/planning/shortages${q}`);
+  },
+
+  getRecommendations: (plantCode?: string): Promise<import("./types").RecommendationSummary> => {
+    const q = plantCode ? `?plant_code=${encodeURIComponent(plantCode)}` : "";
+    return fetchApi<import("./types").RecommendationSummary>(`/planning/recommendations${q}`);
+  },
+};
+

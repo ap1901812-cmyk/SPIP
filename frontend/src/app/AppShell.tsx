@@ -84,6 +84,51 @@ export function AppShell() {
           </NavLink>
 
           <NavLink
+            to="/finished-goods"
+            className={({ isActive }) =>
+              `sidebar-nav-item ${isActive ? "active" : ""}`
+            }
+          >
+            Finished Goods
+          </NavLink>
+
+          <NavLink
+            to="/bom-explorer"
+            className={({ isActive }) =>
+              `sidebar-nav-item ${isActive ? "active" : ""}`
+            }
+          >
+            BOM Explorer
+          </NavLink>
+
+          <NavLink
+            to="/planning-workspace"
+            className={({ isActive }) =>
+              `sidebar-nav-item ${isActive ? "active" : ""}`
+            }
+          >
+            Planning Engine
+          </NavLink>
+
+          <NavLink
+            to="/planning-insights"
+            className={({ isActive }) =>
+              `sidebar-nav-item ${isActive ? "active" : ""}`
+            }
+          >
+            Shortages & Orders
+          </NavLink>
+
+          <NavLink
+            to="/dependencies"
+            className={({ isActive }) =>
+              `sidebar-nav-item ${isActive ? "active" : ""}`
+            }
+          >
+            Where-Used Analysis
+          </NavLink>
+
+          <NavLink
             to="/planning"
             className={({ isActive }) =>
               `sidebar-nav-item ${isActive ? "active" : ""}`
@@ -116,7 +161,7 @@ export function AppShell() {
               `sidebar-nav-item ${isActive ? "active" : ""}`
             }
           >
-            Manager Queue {isManagerOrAdmin && <span style={{ color: "var(--spip-red)", fontWeight: "bold" }}>â—</span>}
+            Manager Queue {isManagerOrAdmin && <span style={{ color: "var(--spip-red)", fontWeight: "bold" }}>â— </span>}
           </NavLink>
 
           <NavLink

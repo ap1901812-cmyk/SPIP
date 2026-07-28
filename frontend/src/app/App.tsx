@@ -6,13 +6,18 @@ import { useAuth } from "./useAuth";
 
 import { AppShell } from "./AppShell";
 import { AllocationsPage } from "./pages/AllocationsPage";
+import { BOMExplorerPage } from "./pages/BOMExplorerPage";
 import { DashboardPage } from "./pages/DashboardPage";
+import { DependencyPage } from "./pages/DependencyPage";
+import { FinishedGoodsPage } from "./pages/FinishedGoodsPage";
 import { ForecastingPage } from "./pages/ForecastingPage";
 import { IngestionPage } from "./pages/IngestionPage";
 import { LoginPage } from "./pages/LoginPage";
 import { ManagerApprovalPage } from "./pages/ManagerApprovalPage";
 import { NotificationsPage } from "./pages/NotificationsPage";
 import { PlanningDetailPage } from "./pages/PlanningDetailPage";
+import { PlanningInsightsPage } from "./pages/PlanningInsightsPage";
+import { PlanningWorkspacePage } from "./pages/PlanningWorkspacePage";
 import { ReportsPage } from "./pages/ReportsPage";
 
 import { queryClient } from "./query-client";
@@ -52,6 +57,11 @@ export function App() {
               }
             >
               <Route index element={<DashboardPage />} />
+              <Route path="finished-goods" element={<FinishedGoodsPage />} />
+              <Route path="bom-explorer" element={<BOMExplorerPage />} />
+              <Route path="planning-workspace" element={<PlanningWorkspacePage />} />
+              <Route path="planning-insights" element={<PlanningInsightsPage />} />
+              <Route path="dependencies" element={<DependencyPage />} />
               <Route path="planning" element={<DashboardPage />} />
               <Route path="planning/:materialCode" element={<PlanningDetailPage />} />
               <Route path="forecasting" element={<ForecastingPage />} />
