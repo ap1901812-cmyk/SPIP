@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user, get_db
@@ -17,6 +17,11 @@ router = APIRouter(prefix="/materials", tags=["materials"])
 def list_materials(
     db: Annotated[Session, Depends(get_db)],
     current_user: Annotated[User, Depends(get_current_user)],
+    material_type: str | None = Query(None, description="Filter materials by type (e.g. FG, RM, PM)"),
 ) -> list[MaterialResponse]:
-    materials = db.query(Material).all()
+    query = db.query(Material)
+    if material_type:
+        query = query.filter(Material.material_type == material_type)
+    materials = query.all()
     return [MaterialResponse.model_validate(m) for m in materials]
+

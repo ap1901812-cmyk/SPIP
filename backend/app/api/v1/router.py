@@ -2,6 +2,7 @@ from fastapi import APIRouter
 
 from app.api.v1.routes.allocations import router as allocations_router
 from app.api.v1.routes.auth import router as auth_router
+from app.api.v1.routes.boms import router as boms_router
 from app.api.v1.routes.consumption import router as consumption_router
 from app.api.v1.routes.forecasting import router as forecasting_router
 from app.api.v1.routes.health import router as health_router
@@ -22,6 +23,7 @@ api_router.include_router(health_router, tags=["health"])
 api_router.include_router(auth_router)
 api_router.include_router(plants_router)
 api_router.include_router(materials_router)
+api_router.include_router(boms_router)
 api_router.include_router(vendors_router)
 api_router.include_router(inventory_router)
 api_router.include_router(consumption_router)

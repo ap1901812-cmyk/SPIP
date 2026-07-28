@@ -6,6 +6,7 @@ from typing import Any
 from sqlalchemy.orm import Session
 
 from app.db.models.domain import (
+    BOM,
     ConsumptionHistory,
     InventorySnapshot,
     Material,
@@ -40,33 +41,45 @@ class MockSAPAdapter(SAPAdapterInterface):
     def fetch_materials(self) -> list[dict[str, Any]]:
         return [
             {
+                "code": "FG-1001",
+                "description": "Premium High-Density Container (FG)",
+                "material_type": "FG",
+                "base_uom": "PCS",
+            },
+            {
+                "code": "FG-1002",
+                "description": "Standard Industrial Crate (FG)",
+                "material_type": "FG",
+                "base_uom": "PCS",
+            },
+            {
                 "code": "MAT-1001",
                 "description": "High Density Polyethylene Resin",
-                "material_type": "RAW_MATERIAL",
+                "material_type": "RM",
                 "base_uom": "KG",
             },
             {
                 "code": "MAT-1002",
                 "description": "Polypropylene Compound White",
-                "material_type": "RAW_MATERIAL",
+                "material_type": "RM",
                 "base_uom": "KG",
             },
             {
                 "code": "MAT-2001",
                 "description": "Barrier Packaging Film 50m",
-                "material_type": "PACKAGING",
+                "material_type": "PM",
                 "base_uom": "ROLL",
             },
             {
                 "code": "MAT-2002",
                 "description": "Corrugated Shipping Master Case",
-                "material_type": "PACKAGING",
+                "material_type": "PM",
                 "base_uom": "PCS",
             },
             {
                 "code": "MAT-3001",
                 "description": "Chemical Stabilizer Additive",
-                "material_type": "CHEMICAL",
+                "material_type": "RM",
                 "base_uom": "L",
             },
         ]
@@ -417,6 +430,41 @@ class MockSAPAdapter(SAPAdapterInterface):
                                     status=line["status"],
                                 )
                             )
+
+        # 7. Sync BOMs
+        counts["boms"] = 0
+        fg1 = material_map.get("FG-1001")
+        fg2 = material_map.get("FG-1002")
+        mat1001 = material_map.get("MAT-1001")
+        mat2001 = material_map.get("MAT-2001")
+        mat1002 = material_map.get("MAT-1002")
+        mat2002 = material_map.get("MAT-2002")
+
+        bom_specs = [
+            (fg1, mat1001, 2.5, "KG"),
+            (fg1, mat2001, 1.0, "ROLL"),
+            (fg2, mat1002, 3.0, "KG"),
+            (fg2, mat2002, 1.0, "PCS"),
+        ]
+
+        for fg_mat, comp_mat, qty, uom in bom_specs:
+            if fg_mat and comp_mat:
+                existing_bom = (
+                    db.query(BOM)
+                    .filter(BOM.fg_material_id == fg_mat.id, BOM.component_material_id == comp_mat.id)
+                    .first()
+                )
+                if not existing_bom:
+                    db.add(
+                        BOM(
+                            fg_material_id=fg_mat.id,
+                            component_material_id=comp_mat.id,
+                            required_quantity=qty,
+                            unit_of_measure=uom,
+                            is_active=True,
+                        )
+                    )
+                    counts["boms"] += 1
 
         db.commit()
         return counts
