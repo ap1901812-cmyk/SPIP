@@ -140,12 +140,6 @@ export function PlanningDetailPage() {
           <table className="spip-table">
             <tbody>
               <tr>
-                <td>ABC Class</td>
-                <td>
-                  <span className="user-role-badge">Class {detail.abc_class}</span>
-                </td>
-              </tr>
-              <tr>
                 <td>Service Level Factor (Z)</td>
                 <td>{detail.service_level_z}</td>
               </tr>

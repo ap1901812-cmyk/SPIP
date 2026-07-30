@@ -40,11 +40,22 @@ export function ForecastingPage() {
     ? Math.max(...forecast.point_forecasts.map((p) => p.forecasted_quantity), 1)
     : 1;
 
+  const formatModelName = (model: string): string => {
+    if (!model) return "Standard Model";
+    const u = model.toUpperCase();
+    if (u === "MOVING_AVERAGE_14") return "Moving Average (14-Day)";
+    if (u === "MOVING_AVERAGE_7") return "Moving Average (7-Day)";
+    if (u === "EXPONENTIAL_SMOOTHING") return "Exponential Smoothing";
+    if (u === "NAIVE") return "Naive Baseline";
+    if (u === "FALLBACK_MEAN") return "Historical Mean";
+    return model.replace(/_/g, " ");
+  };
+
   return (
     <div>
       <div className="page-header">
         <div>
-          <h1 className="page-title">V1 Demand Forecasting Engine</h1>
+          <h1 className="page-title">Demand Forecasting Engine</h1>
           <div className="eyebrow" style={{ marginTop: "0.25rem" }}>
             TIME-AWARE BACKTESTED CANDIDATE MODEL SELECTION
           </div>
@@ -123,8 +134,8 @@ export function ForecastingPage() {
           <div className="metrics-grid">
             <div className="metric-card">
               <div className="metric-label">Selected Model</div>
-              <div className="metric-value" style={{ fontSize: "1.25rem", color: "var(--spip-red-dark)" }}>
-                {forecast.selected_model}
+              <div className="metric-value" style={{ fontSize: "1.1rem", color: "var(--spip-red-dark)", fontWeight: 700 }}>
+                {formatModelName(forecast.selected_model)}
               </div>
             </div>
 
@@ -157,50 +168,59 @@ export function ForecastingPage() {
 
             <div
               style={{
-                display: "flex",
-                alignItems: "flex-end",
-                gap: "0.5rem",
-                height: "160px",
-                padding: "1rem 0.5rem",
+                overflowX: "auto",
                 background: "var(--surface-subtle)",
                 borderRadius: "0.375rem",
+                padding: "1rem 0.5rem",
                 marginBottom: "1.5rem",
               }}
             >
-              {forecast.point_forecasts.map((pt) => {
-                const heightPct = Math.max(10, (pt.forecasted_quantity / maxVal) * 100);
-                return (
-                  <div
-                    key={pt.day_offset}
-                    style={{
-                      flex: 1,
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      height: "100%",
-                      justifyContent: "flex-end",
-                    }}
-                  >
-                    <div style={{ fontSize: "0.7rem", fontWeight: "600", marginBottom: "0.2rem" }}>
-                      {pt.forecasted_quantity}
-                    </div>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "flex-end",
+                  gap: "0.5rem",
+                  height: "160px",
+                  minWidth: `${Math.max(100, forecast.point_forecasts.length * 36)}px`,
+                }}
+              >
+                {forecast.point_forecasts.map((pt) => {
+                  const heightPct = Math.max(10, (pt.forecasted_quantity / maxVal) * 100);
+                  return (
                     <div
+                      key={pt.day_offset}
                       style={{
-                        width: "100%",
-                        height: `${heightPct}%`,
-                        background: "var(--spip-red)",
-                        borderRadius: "0.25rem 0.25rem 0 0",
-                        transition: "height 0.3s ease",
+                        flex: 1,
+                        minWidth: "26px",
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        height: "100%",
+                        justifyContent: "flex-end",
                       }}
-                      title={`Day ${pt.day_offset}: ${pt.forecasted_quantity} ${pt.uom}`}
-                    />
-                    <div style={{ fontSize: "0.65rem", color: "var(--text-muted)", marginTop: "0.25rem" }}>
-                      D+{pt.day_offset}
+                    >
+                      <div style={{ fontSize: "0.65rem", fontWeight: "600", marginBottom: "0.2rem" }}>
+                        {pt.forecasted_quantity}
+                      </div>
+                      <div
+                        style={{
+                          width: "100%",
+                          height: `${heightPct}%`,
+                          background: "var(--spip-red)",
+                          borderRadius: "0.25rem 0.25rem 0 0",
+                          transition: "height 0.3s ease",
+                        }}
+                        title={`Day ${pt.day_offset}: ${pt.forecasted_quantity} ${pt.uom}`}
+                      />
+                      <div style={{ fontSize: "0.65rem", color: "var(--text-muted)", marginTop: "0.25rem" }}>
+                        D+{pt.day_offset}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
+
 
             <div className="spip-table-container">
               <table className="spip-table">

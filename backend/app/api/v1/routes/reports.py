@@ -103,8 +103,14 @@ def api_download_export(
         raise ReportingError(f"Export artifact for job '{export_id}' is empty or unavailable.", 404)
 
     meta = json.loads(job.result_json) if job.result_json else {}
-    filename = meta.get("filename", f"{export_id}.dat")
-    media_type = meta.get("media_type", "application/octet-stream")
+    fmt = meta.get("format", "xlsx" if export_id.endswith("-XLSX") else "csv").lower()
+    default_media_type = (
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        if fmt == "xlsx"
+        else "text/csv; charset=utf-8"
+    )
+    media_type = meta.get("media_type", default_media_type)
+    filename = meta.get("filename", f"{export_id}.{fmt}")
 
     return Response(
         content=job.binary_artifact,

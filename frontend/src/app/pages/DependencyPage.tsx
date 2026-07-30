@@ -73,6 +73,15 @@ export const DependencyPage: React.FC = () => {
     return m.code.toLowerCase().includes(term) || m.description.toLowerCase().includes(term);
   });
 
+  const formatMaterialType = (type?: string): string => {
+    if (!type) return "N/A";
+    const upper = type.toUpperCase();
+    if (upper === "RAW_MATERIAL" || upper === "RAW MATERIAL" || upper === "RM") return "RM";
+    if (upper === "PACKAGING" || upper === "PACKAGING MATERIAL" || upper === "PM") return "PM";
+    if (upper === "FINISHED_GOOD" || upper === "FINISHED GOOD" || upper === "FG") return "FG";
+    return type;
+  };
+
   const selectedMaterial = materials.find((m) => m.id === selectedMaterialId);
 
   return (
@@ -102,7 +111,7 @@ export const DependencyPage: React.FC = () => {
           >
             {filteredMaterials.map((m) => (
               <option key={m.id} value={m.id}>
-                {m.code} - {m.description} ({m.material_type})
+                {m.code} - {m.description} ({formatMaterialType(m.material_type)})
               </option>
             ))}
           </select>
@@ -119,7 +128,7 @@ export const DependencyPage: React.FC = () => {
         <>
           <div className="metrics-grid">
             <KpiCard label="Target Material" value={selectedMaterial.code} subtitle={selectedMaterial.description} />
-            <KpiCard label="Classification" value={selectedMaterial.material_type} />
+            <KpiCard label="Classification" value={formatMaterialType(selectedMaterial.material_type)} />
             <KpiCard label="Upstream FGs Count" value={whereUsedData?.total_where_used || 0} type="healthy" subtitle="Where Used Count" />
             <KpiCard label="Downstream Components" value={dependencyData?.downstream_components.length || 0} subtitle="BOM Recipes" />
           </div>
@@ -141,7 +150,7 @@ export const DependencyPage: React.FC = () => {
                       <th>FG Description</th>
                       <th>Classification</th>
                       <th>Required Qty per Unit</th>
-                      <th>UOM</th>
+                      <th>Component UOM</th>
                       <th>BOM Status</th>
                     </tr>
                   </thead>
@@ -182,7 +191,7 @@ export const DependencyPage: React.FC = () => {
                       <th>Description</th>
                       <th>Type</th>
                       <th>Required Qty</th>
-                      <th>UOM</th>
+                      <th>Component UOM</th>
                     </tr>
                   </thead>
                   <tbody>

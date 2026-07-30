@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, NavLink, Outlet } from "react-router-dom";
+import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import { notificationsApi } from "../api/services";
 import { ChangePasswordModal } from "../components/ChangePasswordModal";
 import { useAuth } from "./useAuth";
@@ -9,6 +9,37 @@ export function AppShell() {
   const isManagerOrAdmin = hasRole(["Manager/Approver", "Manager", "Admin"]);
   const isAdmin = hasRole(["Admin"]);
   const [unreadCount, setUnreadCount] = useState<number>(0);
+
+  const location = useLocation();
+  const path = location.pathname;
+
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => {
+    return {
+      planning: ["/planning-workspace", "/planning-insights", "/forecasting", "/planning"].some((p) => path.startsWith(p)),
+      materials: ["/finished-goods", "/dependencies"].some((p) => path.startsWith(p)),
+      operations: ["/allocations", "/approvals", "/notifications", "/ingestion"].some((p) => path.startsWith(p)),
+      reports: path.startsWith("/reports"),
+      admin: path.startsWith("/users"),
+    };
+  });
+
+  useEffect(() => {
+    if (["/planning-workspace", "/planning-insights", "/forecasting", "/planning"].some((p) => path.startsWith(p))) {
+      setOpenSections((prev) => ({ ...prev, planning: true }));
+    } else if (["/finished-goods", "/dependencies"].some((p) => path.startsWith(p))) {
+      setOpenSections((prev) => ({ ...prev, materials: true }));
+    } else if (["/allocations", "/approvals", "/notifications", "/ingestion"].some((p) => path.startsWith(p))) {
+      setOpenSections((prev) => ({ ...prev, operations: true }));
+    } else if (path.startsWith("/reports")) {
+      setOpenSections((prev) => ({ ...prev, reports: true }));
+    } else if (path.startsWith("/users")) {
+      setOpenSections((prev) => ({ ...prev, admin: true }));
+    }
+  }, [path]);
+
+  const toggleSection = (section: string) => {
+    setOpenSections((prev) => ({ ...prev, [section]: !prev[section] }));
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -123,131 +154,269 @@ export function AppShell() {
               `sidebar-nav-item ${isActive ? "active" : ""}`
             }
           >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: "0.5rem" }}>
+              <rect x="3" y="3" width="7" height="7" />
+              <rect x="14" y="3" width="7" height="7" />
+              <rect x="14" y="14" width="7" height="7" />
+              <rect x="3" y="14" width="7" height="7" />
+            </svg>
             Dashboard
           </NavLink>
 
-          <NavLink
-            to="/finished-goods"
-            className={({ isActive }) =>
-              `sidebar-nav-item ${isActive ? "active" : ""}`
-            }
-          >
-            Finished Goods
-          </NavLink>
-
-          <NavLink
-            to="/bom-explorer"
-            className={({ isActive }) =>
-              `sidebar-nav-item ${isActive ? "active" : ""}`
-            }
-          >
-            BOM Explorer
-          </NavLink>
-
-          <NavLink
-            to="/planning-workspace"
-            className={({ isActive }) =>
-              `sidebar-nav-item ${isActive ? "active" : ""}`
-            }
-          >
-            Planning Engine
-          </NavLink>
-
-          <NavLink
-            to="/planning-insights"
-            className={({ isActive }) =>
-              `sidebar-nav-item ${isActive ? "active" : ""}`
-            }
-          >
-            Shortages & Orders
-          </NavLink>
-
-          <NavLink
-            to="/dependencies"
-            className={({ isActive }) =>
-              `sidebar-nav-item ${isActive ? "active" : ""}`
-            }
-          >
-            Where-Used Analysis
-          </NavLink>
-
-          <NavLink
-            to="/planning"
-            className={({ isActive }) =>
-              `sidebar-nav-item ${isActive ? "active" : ""}`
-            }
-          >
-            Planning Overview
-          </NavLink>
-
-          <NavLink
-            to="/forecasting"
-            className={({ isActive }) =>
-              `sidebar-nav-item ${isActive ? "active" : ""}`
-            }
-          >
-            Demand Forecasting
-          </NavLink>
-
-          <NavLink
-            to="/allocations"
-            className={({ isActive }) =>
-              `sidebar-nav-item ${isActive ? "active" : ""}`
-            }
-          >
-            Vendor Allocations
-          </NavLink>
-
-          <NavLink
-            to="/approvals"
-            className={({ isActive }) =>
-              `sidebar-nav-item ${isActive ? "active" : ""}`
-            }
-          >
-            Manager Queue {isManagerOrAdmin && (
-              <svg width="8" height="8" viewBox="0 0 8 8" fill="var(--spip-red)" style={{ marginLeft: "0.25rem", verticalAlign: "middle" }}>
-                <circle cx="4" cy="4" r="4" />
-              </svg>
-            )}
-          </NavLink>
-
-          {isAdmin && (
-            <NavLink
-              to="/users"
-              className={({ isActive }) =>
-                `sidebar-nav-item ${isActive ? "active" : ""}`
-              }
+          {/* Section: Planning */}
+          <div>
+            <button
+              type="button"
+              className="sidebar-section-toggle"
+              onClick={() => toggleSection("planning")}
+              style={{
+                width: "100%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "0.65rem 1rem 0.35rem",
+                background: "none",
+                border: "none",
+                fontSize: "0.75rem",
+                fontWeight: 700,
+                color: "var(--text-muted)",
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
+                cursor: "pointer",
+              }}
             >
-              User Management
-            </NavLink>
+              <span>Planning</span>
+              <span style={{ fontSize: "0.7rem", opacity: 0.7 }}>{openSections.planning ? "▼" : "►"}</span>
+            </button>
+            {openSections.planning && (
+              <div style={{ paddingLeft: "0.5rem" }}>
+                <NavLink
+                  to="/planning-workspace"
+                  className={({ isActive }) =>
+                    `sidebar-nav-item ${isActive ? "active" : ""}`
+                  }
+                >
+                  Planning Overview
+                </NavLink>
+
+                <NavLink
+                  to="/planning-insights"
+                  className={({ isActive }) =>
+                    `sidebar-nav-item ${isActive ? "active" : ""}`
+                  }
+                >
+                  Shortages & Orders
+                </NavLink>
+
+                <NavLink
+                  to="/forecasting"
+                  className={({ isActive }) =>
+                    `sidebar-nav-item ${isActive ? "active" : ""}`
+                  }
+                >
+                  Demand Forecasting
+                </NavLink>
+              </div>
+            )}
+          </div>
+
+          {/* Section: Materials */}
+          <div>
+            <button
+              type="button"
+              className="sidebar-section-toggle"
+              onClick={() => toggleSection("materials")}
+              style={{
+                width: "100%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "0.65rem 1rem 0.35rem",
+                background: "none",
+                border: "none",
+                fontSize: "0.75rem",
+                fontWeight: 700,
+                color: "var(--text-muted)",
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
+                cursor: "pointer",
+              }}
+            >
+              <span>Materials</span>
+              <span style={{ fontSize: "0.7rem", opacity: 0.7 }}>{openSections.materials ? "▼" : "►"}</span>
+            </button>
+            {openSections.materials && (
+              <div style={{ paddingLeft: "0.5rem" }}>
+                <NavLink
+                  to="/finished-goods"
+                  className={({ isActive }) =>
+                    `sidebar-nav-item ${isActive ? "active" : ""}`
+                  }
+                >
+                  Finished Goods
+                </NavLink>
+
+                <NavLink
+                  to="/dependencies"
+                  className={({ isActive }) =>
+                    `sidebar-nav-item ${isActive ? "active" : ""}`
+                  }
+                >
+                  Where-Used Analysis
+                </NavLink>
+              </div>
+            )}
+          </div>
+
+          {/* Section: Operations */}
+          <div>
+            <button
+              type="button"
+              className="sidebar-section-toggle"
+              onClick={() => toggleSection("operations")}
+              style={{
+                width: "100%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "0.65rem 1rem 0.35rem",
+                background: "none",
+                border: "none",
+                fontSize: "0.75rem",
+                fontWeight: 700,
+                color: "var(--text-muted)",
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
+                cursor: "pointer",
+              }}
+            >
+              <span>Operations</span>
+              <span style={{ fontSize: "0.7rem", opacity: 0.7 }}>{openSections.operations ? "▼" : "►"}</span>
+            </button>
+            {openSections.operations && (
+              <div style={{ paddingLeft: "0.5rem" }}>
+                <NavLink
+                  to="/allocations"
+                  className={({ isActive }) =>
+                    `sidebar-nav-item ${isActive ? "active" : ""}`
+                  }
+                >
+                  Vendor Allocations
+                </NavLink>
+
+                <NavLink
+                  to="/approvals"
+                  className={({ isActive }) =>
+                    `sidebar-nav-item ${isActive ? "active" : ""}`
+                  }
+                >
+                  Manager Queue {isManagerOrAdmin && (
+                    <svg width="8" height="8" viewBox="0 0 8 8" fill="var(--spip-red)" style={{ marginLeft: "0.25rem", verticalAlign: "middle" }}>
+                      <circle cx="4" cy="4" r="4" />
+                    </svg>
+                  )}
+                </NavLink>
+
+                <NavLink
+                  to="/notifications"
+                  className={({ isActive }) =>
+                    `sidebar-nav-item ${isActive ? "active" : ""}`
+                  }
+                >
+                  Notifications {unreadCount > 0 && <span className="badge badge-error" style={{ marginLeft: "0.5rem", fontSize: "0.7rem" }}>{unreadCount}</span>}
+                </NavLink>
+
+                <NavLink
+                  to="/ingestion"
+                  className={({ isActive }) =>
+                    `sidebar-nav-item ${isActive ? "active" : ""}`
+                  }
+                >
+                  Data & SAP Sync
+                </NavLink>
+              </div>
+            )}
+          </div>
+
+          {/* Section: Reports */}
+          <div>
+            <button
+              type="button"
+              className="sidebar-section-toggle"
+              onClick={() => toggleSection("reports")}
+              style={{
+                width: "100%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "0.65rem 1rem 0.35rem",
+                background: "none",
+                border: "none",
+                fontSize: "0.75rem",
+                fontWeight: 700,
+                color: "var(--text-muted)",
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
+                cursor: "pointer",
+              }}
+            >
+              <span>Reports</span>
+              <span style={{ fontSize: "0.7rem", opacity: 0.7 }}>{openSections.reports ? "▼" : "►"}</span>
+            </button>
+            {openSections.reports && (
+              <div style={{ paddingLeft: "0.5rem" }}>
+                <NavLink
+                  to="/reports"
+                  className={({ isActive }) =>
+                    `sidebar-nav-item ${isActive ? "active" : ""}`
+                  }
+                >
+                  Reports & Exports
+                </NavLink>
+              </div>
+            )}
+          </div>
+
+          {/* Section: Administration */}
+          {isAdmin && (
+            <div>
+              <button
+                type="button"
+                className="sidebar-section-toggle"
+                onClick={() => toggleSection("admin")}
+                style={{
+                  width: "100%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  padding: "0.65rem 1rem 0.35rem",
+                  background: "none",
+                  border: "none",
+                  fontSize: "0.75rem",
+                  fontWeight: 700,
+                  color: "var(--text-muted)",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.05em",
+                  cursor: "pointer",
+                }}
+              >
+                <span>Administration</span>
+                <span style={{ fontSize: "0.7rem", opacity: 0.7 }}>{openSections.admin ? "▼" : "►"}</span>
+              </button>
+              {openSections.admin && (
+                <div style={{ paddingLeft: "0.5rem" }}>
+                  <NavLink
+                    to="/users"
+                    className={({ isActive }) =>
+                      `sidebar-nav-item ${isActive ? "active" : ""}`
+                    }
+                  >
+                    User Management
+                  </NavLink>
+                </div>
+              )}
+            </div>
           )}
-
-          <NavLink
-            to="/notifications"
-            className={({ isActive }) =>
-              `sidebar-nav-item ${isActive ? "active" : ""}`
-            }
-          >
-            Notifications {unreadCount > 0 && <span className="badge badge-error" style={{ marginLeft: "0.5rem", fontSize: "0.7rem" }}>{unreadCount}</span>}
-          </NavLink>
-
-          <NavLink
-            to="/reports"
-            className={({ isActive }) =>
-              `sidebar-nav-item ${isActive ? "active" : ""}`
-            }
-          >
-            Reports & Exports
-          </NavLink>
-
-          <NavLink
-            to="/ingestion"
-            className={({ isActive }) =>
-              `sidebar-nav-item ${isActive ? "active" : ""}`
-            }
-          >
-            Data & SAP Sync
-          </NavLink>
         </aside>
 
         <main className="main-content">

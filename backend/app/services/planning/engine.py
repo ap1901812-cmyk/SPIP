@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from typing import Literal
 
 from sqlalchemy.orm import Session
@@ -57,8 +57,8 @@ def evaluate_material_planning(
         else cfg.planning_decision_horizon_days
     )
 
-    as_of = as_of_datetime or datetime.now(UTC)
-    as_of_d = as_of.date()
+    as_of = as_of_datetime or datetime.now()
+    as_of_d = date.today() if as_of_datetime is None else as_of.date()
 
     # 1. Consumption Statistics
     stats = calculate_demand_statistics(

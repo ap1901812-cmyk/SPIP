@@ -67,11 +67,11 @@ export function App() {
             >
               <Route index element={<DashboardPage />} />
               <Route path="finished-goods" element={<FinishedGoodsPage />} />
-              <Route path="bom-explorer" element={<BOMExplorerPage />} />
+              <Route path="bom-explorer" element={<Navigate to="/finished-goods" replace />} />
               <Route path="planning-workspace" element={<PlanningWorkspacePage />} />
               <Route path="planning-insights" element={<PlanningInsightsPage />} />
               <Route path="dependencies" element={<DependencyPage />} />
-              <Route path="planning" element={<DashboardPage />} />
+              <Route path="planning" element={<PlanningWorkspacePage />} />
               <Route path="planning/:materialCode" element={<PlanningDetailPage />} />
               <Route path="forecasting" element={<ForecastingPage />} />
               <Route path="allocations" element={<AllocationsPage />} />

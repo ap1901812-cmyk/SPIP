@@ -1,4 +1,4 @@
-import { fetchApi, setToken } from "./client";
+import { fetchApi, fetchBlob, setToken } from "./client";
 import type {
   Allocation,
   ChangePasswordPayload,
@@ -255,6 +255,10 @@ export const reportsApi = {
       method: "POST",
       body: JSON.stringify(payload),
     });
+  },
+
+  downloadFile: (downloadUrl: string) => {
+    return fetchBlob(downloadUrl);
   },
 };
 

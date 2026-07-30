@@ -92,24 +92,8 @@ export function ReportsPage() {
         status: allocationStatus || undefined,
       });
 
-      // Authorized download via fetch with bearer token
-      const token = localStorage.getItem("spip_token");
-      const downloadRes = await fetch(job.download_url, {
-        headers: {
-          Authorization: token ? `Bearer ${token}` : "",
-        },
-      });
-
-      if (!downloadRes.ok) {
-        throw new Error(`Download failed with status ${downloadRes.status}`);
-      }
-
-      const blob = await downloadRes.blob();
-      const filename =
-        downloadRes.headers
-          .get("content-disposition")
-          ?.split("filename=")[1]
-          ?.replace(/"/g, "") || `${reportType}.${format}`;
+      const { blob, filename: headerFilename } = await reportsApi.downloadFile(job.download_url);
+      const filename = headerFilename || `${reportType}.${format}`;
 
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
