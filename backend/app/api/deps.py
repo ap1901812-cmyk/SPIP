@@ -50,6 +50,9 @@ def get_current_user(
 
 def require_roles(*allowed_roles: RoleEnum | str) -> Callable[[User], User]:
     allowed_role_strs = {r.value if isinstance(r, RoleEnum) else r for r in allowed_roles}
+    if RoleEnum.MANAGER_APPROVER.value in allowed_role_strs or "Manager" in allowed_role_strs:
+        allowed_role_strs.add("Manager")
+        allowed_role_strs.add(RoleEnum.MANAGER_APPROVER.value)
 
     def role_checker(current_user: Annotated[User, Depends(get_current_user)]) -> User:
         user_role_names = {r.role_name for r in current_user.roles}

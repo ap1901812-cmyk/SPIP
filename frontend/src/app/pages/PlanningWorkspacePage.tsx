@@ -75,7 +75,16 @@ export const PlanningWorkspacePage: React.FC = () => {
           onClick={executePlanning}
           disabled={loading}
         >
-          {loading ? "Calculating..." : "âš¡ Run Planning Engine"}
+          {loading ? (
+            "Calculating..."
+          ) : (
+            <>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: "0.4rem" }}>
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+              </svg>
+              Run Planning Engine
+            </>
+          )}
         </button>
       </div>
 

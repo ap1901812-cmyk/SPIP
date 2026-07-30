@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink, Outlet } from "react-router-dom";
 import { notificationsApi } from "../api/services";
+import { ChangePasswordModal } from "../components/ChangePasswordModal";
 import { useAuth } from "./useAuth";
 
 export function AppShell() {
   const { user, logout, hasRole } = useAuth();
-  const isManagerOrAdmin = hasRole(["Manager/Approver", "Admin"]);
+  const isManagerOrAdmin = hasRole(["Manager/Approver", "Manager", "Admin"]);
+  const isAdmin = hasRole(["Admin"]);
   const [unreadCount, setUnreadCount] = useState<number>(0);
 
   useEffect(() => {
@@ -16,8 +18,18 @@ export function AppShell() {
       .catch(() => {});
   }, [user]);
 
+  const getPrimaryRole = (roles?: string[]): string => {
+    if (!roles || roles.length === 0) return "Planner";
+    if (roles.includes("Admin")) return "Admin";
+    if (roles.includes("Manager") || roles.includes("Manager/Approver")) return "Manager";
+    if (roles.includes("Planner")) return "Planner";
+    return roles[0];
+  };
+
   return (
     <div className="app-shell">
+      <ChangePasswordModal />
+
       <header className="top-header">
         <div className="brand-container">
           <div className="brand-logo">S</div>
@@ -28,14 +40,17 @@ export function AppShell() {
         </div>
 
         {user && (
-          <div className="user-profile" style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+          <div className="user-profile" style={{ display: "flex", alignItems: "center", gap: "1.25rem" }}>
             <Link
               to="/notifications"
               className="btn btn-secondary"
               style={{ position: "relative", padding: "0.4rem 0.75rem", fontSize: "0.85rem" }}
               title="Notifications"
             >
-              ðŸ””
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+              </svg>
               {unreadCount > 0 && (
                 <span
                   style={{
@@ -54,16 +69,44 @@ export function AppShell() {
                 </span>
               )}
             </Link>
-            <div className="user-info">
-              <div className="user-name">{user.full_name}</div>
-              <div>
-                {user.roles?.map((r) => (
-                  <span key={r} className="user-role-badge">
-                    {r}
-                  </span>
-                ))}
+
+            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+              <div
+                style={{
+                  width: "2.4rem",
+                  height: "2.4rem",
+                  borderRadius: "50%",
+                  backgroundColor: "var(--spip-red-light, #fef2f2)",
+                  border: "1px solid var(--spip-red-border, #fecaca)",
+                  display: "grid",
+                  placeItems: "center",
+                }}
+              >
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="var(--spip-red)"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+              </div>
+
+              <div className="user-info" style={{ textAlign: "left" }}>
+                <div className="user-name" style={{ fontSize: "0.9rem", fontWeight: 700, color: "var(--text-main)" }}>
+                  {user.full_name}
+                </div>
+                <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", fontWeight: 500 }}>
+                  {getPrimaryRole(user.roles)}
+                </div>
               </div>
             </div>
+
             <button type="button" className="btn btn-secondary" onClick={logout}>
               Sign Out
             </button>
@@ -161,8 +204,23 @@ export function AppShell() {
               `sidebar-nav-item ${isActive ? "active" : ""}`
             }
           >
-            Manager Queue {isManagerOrAdmin && <span style={{ color: "var(--spip-red)", fontWeight: "bold" }}>â— </span>}
+            Manager Queue {isManagerOrAdmin && (
+              <svg width="8" height="8" viewBox="0 0 8 8" fill="var(--spip-red)" style={{ marginLeft: "0.25rem", verticalAlign: "middle" }}>
+                <circle cx="4" cy="4" r="4" />
+              </svg>
+            )}
           </NavLink>
+
+          {isAdmin && (
+            <NavLink
+              to="/users"
+              className={({ isActive }) =>
+                `sidebar-nav-item ${isActive ? "active" : ""}`
+              }
+            >
+              User Management
+            </NavLink>
+          )}
 
           <NavLink
             to="/notifications"

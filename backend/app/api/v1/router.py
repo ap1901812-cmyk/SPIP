@@ -17,11 +17,13 @@ from app.api.v1.routes.plants import router as plants_router
 from app.api.v1.routes.purchase_orders import router as po_router
 from app.api.v1.routes.reports import router as reports_router
 from app.api.v1.routes.sap import router as sap_router
+from app.api.v1.routes.users import router as users_router
 from app.api.v1.routes.vendors import router as vendors_router
 
 api_router = APIRouter()
 api_router.include_router(health_router, tags=["health"])
 api_router.include_router(auth_router)
+api_router.include_router(users_router)
 api_router.include_router(plants_router)
 api_router.include_router(materials_router)
 api_router.include_router(finished_goods_router)

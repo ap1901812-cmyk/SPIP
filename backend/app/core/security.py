@@ -4,6 +4,9 @@ import base64
 import hashlib
 import hmac
 import json
+import re
+import secrets
+import string
 from datetime import UTC, datetime
 from typing import Any
 
@@ -13,6 +16,31 @@ from app.core.errors import UnauthenticatedError
 settings = get_settings()
 
 PBKDF2_ITERATIONS = 100_000
+
+
+def validate_password_policy(password: str) -> None:
+    if len(password) < 8:
+        raise ValueError("Password must be at least 8 characters long.")
+    if not re.search(r"[A-Z]", password):
+        raise ValueError("Password must contain at least one uppercase letter.")
+    if not re.search(r"[a-z]", password):
+        raise ValueError("Password must contain at least one lowercase letter.")
+    if not re.search(r"[0-9]", password):
+        raise ValueError("Password must contain at least one digit.")
+    if not re.search(r"[!@#$%^&*(),.?\":{}|<>\-_=+\\\/]", password):
+        raise ValueError("Password must contain at least one special character.")
+
+
+def generate_secure_temporary_password() -> str:
+    upper = secrets.choice(string.ascii_uppercase)
+    lower = secrets.choice(string.ascii_lowercase)
+    digit = secrets.choice(string.digits)
+    special = secrets.choice("!@#$%^&*")
+    alphabet = string.ascii_letters + string.digits + "!@#$%^&*"
+    extra = "".join(secrets.choice(alphabet) for _ in range(6))
+    chars = list(upper + lower + digit + special + extra)
+    secrets.SystemRandom().shuffle(chars)
+    return "".join(chars)
 
 
 def hash_password(password: str) -> str:

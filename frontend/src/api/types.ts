@@ -1,15 +1,48 @@
 export interface UserProfile {
   id: number;
+  username: string;
   email: string;
   full_name: string;
   is_active: boolean;
+  must_change_password: boolean;
   roles: string[];
+  created_at?: string;
 }
-
 
 export interface LoginResponse {
   access_token: string;
   token_type: string;
+  must_change_password: boolean;
+}
+
+export interface UserCreatePayload {
+  username: string;
+  email: string;
+  full_name: string;
+  password?: string;
+  roles: string[];
+  is_active?: boolean;
+}
+
+export interface UserUpdatePayload {
+  full_name?: string;
+  email?: string;
+  username?: string;
+  roles?: string[];
+  is_active?: boolean;
+}
+
+export interface UserResetPasswordPayload {
+  new_password?: string;
+}
+
+export interface UserStatusPayload {
+  is_active: boolean;
+}
+
+export interface ChangePasswordPayload {
+  current_password: string;
+  new_password: string;
 }
 
 export interface Plant {

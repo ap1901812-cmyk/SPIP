@@ -19,6 +19,7 @@ import { PlanningDetailPage } from "./pages/PlanningDetailPage";
 import { PlanningInsightsPage } from "./pages/PlanningInsightsPage";
 import { PlanningWorkspacePage } from "./pages/PlanningWorkspacePage";
 import { ReportsPage } from "./pages/ReportsPage";
+import { UserManagementPage } from "./pages/UserManagementPage";
 
 import { queryClient } from "./query-client";
 
@@ -37,6 +38,14 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     return <Navigate to="/login" replace />;
   }
 
+  return <>{children}</>;
+}
+
+function AdminRoute({ children }: { children: React.ReactNode }) {
+  const { hasRole } = useAuth();
+  if (!hasRole(["Admin"])) {
+    return <Navigate to="/" replace />;
+  }
   return <>{children}</>;
 }
 
@@ -67,6 +76,14 @@ export function App() {
               <Route path="forecasting" element={<ForecastingPage />} />
               <Route path="allocations" element={<AllocationsPage />} />
               <Route path="approvals" element={<ManagerApprovalPage />} />
+              <Route
+                path="users"
+                element={
+                  <AdminRoute>
+                    <UserManagementPage />
+                  </AdminRoute>
+                }
+              />
               <Route path="notifications" element={<NotificationsPage />} />
               <Route path="reports" element={<ReportsPage />} />
               <Route path="ingestion" element={<IngestionPage />} />

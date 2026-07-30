@@ -14,6 +14,7 @@ from app.main import app
 
 def _seed_test_users(db: Session) -> dict[str, User]:
     planner = User(
+        username="planner",
         email="planner@spip.local",
         full_name="Planner User",
         hashed_password=hash_password("PlannerPass123!"),
@@ -22,6 +23,7 @@ def _seed_test_users(db: Session) -> dict[str, User]:
     planner.roles.append(UserRole(role_name=RoleEnum.PLANNER.value))
 
     manager = User(
+        username="manager",
         email="manager@spip.local",
         full_name="Manager User",
         hashed_password=hash_password("ManagerPass123!"),
@@ -30,6 +32,7 @@ def _seed_test_users(db: Session) -> dict[str, User]:
     manager.roles.append(UserRole(role_name=RoleEnum.MANAGER_APPROVER.value))
 
     inactive = User(
+        username="inactive",
         email="inactive@spip.local",
         full_name="Inactive User",
         hashed_password=hash_password("InactivePass123!"),
@@ -48,7 +51,7 @@ def test_login_successful(client: TestClient, db_session: Session) -> None:
     users = _seed_test_users(db_session)
     response = client.post(
         "/api/v1/auth/login",
-        json={"email": users["planner"].email, "password": "PlannerPass123!"},
+        json={"username": users["planner"].username, "password": "PlannerPass123!"},
     )
     assert response.status_code == 200
     data = response.json()
@@ -64,7 +67,7 @@ def test_login_failed_wrong_password(client: TestClient, db_session: Session) ->
     users = _seed_test_users(db_session)
     response = client.post(
         "/api/v1/auth/login",
-        json={"email": users["planner"].email, "password": "WrongPassword"},
+        json={"username": users["planner"].username, "password": "WrongPassword"},
     )
     assert response.status_code == 401
     assert response.json()["code"] == "UNAUTHENTICATED"
@@ -77,7 +80,7 @@ def test_login_failed_inactive_user(client: TestClient, db_session: Session) -> 
     users = _seed_test_users(db_session)
     response = client.post(
         "/api/v1/auth/login",
-        json={"email": users["inactive"].email, "password": "InactivePass123!"},
+        json={"username": users["inactive"].username, "password": "InactivePass123!"},
     )
     assert response.status_code == 401
 

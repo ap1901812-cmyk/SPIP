@@ -2,10 +2,12 @@ from __future__ import annotations
 
 import csv
 import io
+import re
 from typing import Any
 
 import openpyxl
 from openpyxl.styles import Alignment, Font, PatternFill
+from openpyxl.utils import get_column_letter
 from sqlalchemy.orm import Session
 
 from app.core.errors import AppError
@@ -260,23 +262,43 @@ def build_csv_export(headers: list[str], rows: list[list[Any]]) -> bytes:
 
 
 def build_xlsx_export(sheet_title: str, headers: list[str], rows: list[list[Any]]) -> bytes:
-    """Builds Excel (.xlsx) binary payload using openpyxl."""
+    """Builds valid Excel (.xlsx) binary payload using openpyxl with native data types & formatting."""
     wb = openpyxl.Workbook()
     ws = wb.active
-    ws.title = sheet_title[:31]
+    clean_title = re.sub(r"[\\/*?:\[\]]", "_", sheet_title)[:31]
+    ws.title = clean_title
 
     header_fill = PatternFill(start_color="1F2937", end_color="1F2937", fill_type="solid")
     header_font = Font(name="Calibri", size=11, bold=True, color="FFFFFF")
+    header_align = Alignment(horizontal="center", vertical="center", wrap_text=True)
 
     ws.append(headers)
     for col_num in range(1, len(headers) + 1):
         cell = ws.cell(row=1, column=col_num)
         cell.fill = header_fill
         cell.font = header_font
-        cell.alignment = Alignment(horizontal="center", vertical="center")
+        cell.alignment = header_align
 
     for row in rows:
-        ws.append([str(val) if val is not None else "" for val in row])
+        formatted_row = []
+        for val in row:
+            if val is None:
+                formatted_row.append("")
+            elif isinstance(val, (int, float, bool)):
+                formatted_row.append(val)
+            else:
+                formatted_row.append(str(val))
+        ws.append(formatted_row)
+
+    # Auto-fit column widths
+    for col in ws.columns:
+        max_len = 0
+        col_letter = get_column_letter(col[0].column)
+        for cell in col:
+            val_str = str(cell.value or "")
+            if len(val_str) > max_len:
+                max_len = len(val_str)
+        ws.column_dimensions[col_letter].width = max(max_len + 4, 12)
 
     buffer = io.BytesIO()
     wb.save(buffer)

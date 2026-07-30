@@ -2,13 +2,12 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../useAuth";
 
-
 export function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const [email, setEmail] = useState("planner@spip.local");
-  const [password, setPassword] = useState("Pass123!");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -17,7 +16,7 @@ export function LoginPage() {
     setError(null);
     setIsSubmitting(true);
     try {
-      await login(email, password);
+      await login(username, password);
       navigate("/");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Authentication failed.";
@@ -27,18 +26,13 @@ export function LoginPage() {
     }
   };
 
-  const setDemoUser = (demoEmail: string) => {
-    setEmail(demoEmail);
-    setPassword("Pass123!");
-  };
-
   return (
     <div className="login-container">
       <div className="login-card">
         <div className="brand-container" style={{ justifyContent: "center", marginBottom: "1.5rem" }}>
           <div className="brand-logo">S</div>
           <div>
-            <h1 className="brand-title">SPIP V1</h1>
+            <h1 className="brand-title">SPIP</h1>
             <div className="brand-subtitle">Smart Procurement & Inventory Planning</div>
           </div>
         </div>
@@ -47,16 +41,18 @@ export function LoginPage() {
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label className="form-label" htmlFor="email">
-              Email Address
+            <label className="form-label" htmlFor="username">
+              Username
             </label>
             <input
-              id="email"
-              type="email"
+              id="username"
+              type="text"
               className="form-input"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Enter your username"
               required
+              autoComplete="username"
             />
           </div>
 
@@ -70,7 +66,9 @@ export function LoginPage() {
               className="form-input"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter your password"
               required
+              autoComplete="current-password"
             />
           </div>
 
@@ -80,41 +78,9 @@ export function LoginPage() {
             style={{ width: "100%", marginTop: "0.5rem" }}
             disabled={isSubmitting}
           >
-            {isSubmitting ? "Signing in..." : "Sign In to SPIP"}
+            {isSubmitting ? "Signing in..." : "Sign In"}
           </button>
         </form>
-
-        <div style={{ marginTop: "1.5rem", borderTop: "1px solid var(--border)", paddingTop: "1rem" }}>
-          <div className="eyebrow" style={{ textAlign: "center", marginBottom: "0.5rem" }}>
-            DEMO QUICK LOGIN PRESETS
-          </div>
-          <div style={{ display: "flex", gap: "0.5rem", justifyContent: "center" }}>
-            <button
-              type="button"
-              className="btn btn-secondary"
-              style={{ fontSize: "0.75rem", padding: "0.25rem 0.5rem" }}
-              onClick={() => setDemoUser("planner@spip.local")}
-            >
-              Planner
-            </button>
-            <button
-              type="button"
-              className="btn btn-secondary"
-              style={{ fontSize: "0.75rem", padding: "0.25rem 0.5rem" }}
-              onClick={() => setDemoUser("manager@spip.local")}
-            >
-              Manager
-            </button>
-            <button
-              type="button"
-              className="btn btn-secondary"
-              style={{ fontSize: "0.75rem", padding: "0.25rem 0.5rem" }}
-              onClick={() => setDemoUser("admin@spip.local")}
-            >
-              Admin
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   );

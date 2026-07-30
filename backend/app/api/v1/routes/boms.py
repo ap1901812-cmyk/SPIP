@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, Query, Response, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user, get_db, require_roles
@@ -76,10 +76,11 @@ def update_bom(
     return BOMDetailResponse.model_validate(bom)
 
 
-@router.delete("/{bom_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{bom_id}", status_code=status.HTTP_204_NO_CONTENT, response_class=Response)
 def delete_bom(
     bom_id: int,
     db: Annotated[Session, Depends(get_db)],
     current_user: Annotated[User, Depends(admin_role)],
-) -> None:
+) -> Response:
     BOMService.delete_bom(db, bom_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

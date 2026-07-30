@@ -23,40 +23,59 @@ def seed_database() -> None:
         logger.info("Starting SPIP database seeding...")
         default_pw = hash_password("Pass123!")
 
-        # 1. Users & Roles (matching frontend demo login presets)
-        demo_users = [
-            {"email": "admin@spip.local", "name": "System Admin", "role": RoleEnum.ADMIN.value},
+        # 1. Seed Users & Roles
+        initial_users = [
             {
+                "username": "admin",
+                "email": "admin@spip.local",
+                "name": "Aditya Pandey",
+                "role": RoleEnum.ADMIN.value,
+            },
+            {
+                "username": "planner",
                 "email": "planner@spip.local",
-                "name": "Primary Planner",
+                "name": "Rahul Sharma",
                 "role": RoleEnum.PLANNER.value,
             },
             {
+                "username": "manager",
                 "email": "manager@spip.local",
-                "name": "Supply Manager",
+                "name": "Amit Verma",
                 "role": RoleEnum.MANAGER_APPROVER.value,
             },
             {
+                "username": "readonly",
                 "email": "readonly@spip.local",
-                "name": "Auditor ReadOnly",
+                "name": "Auditor User",
                 "role": RoleEnum.READ_ONLY.value,
             },
         ]
 
-        for user_data in demo_users:
-            user = db.query(User).filter(User.email == user_data["email"]).first()
+        for user_data in initial_users:
+            user = (
+                db.query(User)
+                .filter((User.username == user_data["username"]) | (User.email == user_data["email"]))
+                .first()
+            )
             if not user:
                 user = User(
+                    username=user_data["username"],
                     email=user_data["email"],
                     full_name=user_data["name"],
                     hashed_password=default_pw,
                     is_active=True,
+                    must_change_password=False,
                 )
                 db.add(user)
                 db.flush()
                 role = UserRole(user_id=user.id, role_name=user_data["role"])
                 db.add(role)
-                logger.info("Created user %s with role %s", user_data["email"], user_data["role"])
+                logger.info("Created user %s (%s) with role %s", user_data["username"], user_data["email"], user_data["role"])
+            else:
+                user.username = user_data["username"]
+                user.full_name = user_data["name"]
+                user.must_change_password = False
+                db.flush()
 
         # 2. Sync domain data from SAP Mock Adapter
         sap_adapter = MockSAPAdapter()

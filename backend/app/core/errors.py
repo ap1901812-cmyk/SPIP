@@ -28,3 +28,8 @@ class UnauthorizedError(AppError):
 class RateLimitExceededError(AppError):
     def __init__(self, message: str = "Too many requests. Please try again later.") -> None:
         super().__init__("RATE_LIMIT_EXCEEDED", message, 429)
+
+
+class BadRequestError(AppError):
+    def __init__(self, message: str = "Invalid request parameters.") -> None:
+        super().__init__("BAD_REQUEST", message, 400)

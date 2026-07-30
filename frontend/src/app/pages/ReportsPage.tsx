@@ -143,7 +143,13 @@ export function ReportsPage() {
             className="btn btn-primary"
             onClick={handleExport}
             disabled={isExporting}
+            style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem" }}
           >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
             {isExporting ? "Generating Export..." : `Export File (${format.toUpperCase()})`}
           </button>
         </div>
@@ -160,11 +166,11 @@ export function ReportsPage() {
             </label>
             <select
               id="report-type-select"
-              className="form-input"
+              className="form-select"
               value={reportType}
               onChange={(e) => setReportType(e.target.value)}
             >
-              <option value="planning_summary">Inventory & Planning Summary</option>
+              <option value="planning_summary">Planning Summary</option>
               <option value="forecast_summary">Demand Forecast Summary</option>
               <option value="allocations">Vendor Allocations</option>
             </select>
@@ -176,7 +182,7 @@ export function ReportsPage() {
             </label>
             <select
               id="format-select"
-              className="form-input"
+              className="form-select"
               value={format}
               onChange={(e) => setFormat(e.target.value as "xlsx" | "csv")}
             >
@@ -191,7 +197,7 @@ export function ReportsPage() {
             </label>
             <select
               id="plant-filter-select"
-              className="form-input"
+              className="form-select"
               value={plantCode}
               onChange={(e) => setPlantCode(e.target.value)}
             >
@@ -228,7 +234,7 @@ export function ReportsPage() {
               </label>
               <select
                 id="criticality-filter-select"
-                className="form-input"
+                className="form-select"
                 value={criticalityStatus}
                 onChange={(e) => setCriticalityStatus(e.target.value)}
               >
@@ -247,7 +253,7 @@ export function ReportsPage() {
               </label>
               <select
                 id="status-filter-select"
-                className="form-input"
+                className="form-select"
                 value={allocationStatus}
                 onChange={(e) => setAllocationStatus(e.target.value)}
               >
@@ -278,13 +284,15 @@ export function ReportsPage() {
           <p className="text-secondary">Try adjusting your filters or selecting a different report type.</p>
         </div>
       ) : (
-        <div className="card" style={{ padding: 0 }}>
-          <div style={{ padding: "1rem 1.5rem", borderBottom: "1px solid var(--border)", display: "flex", justifyContent: "space-between" }}>
-            <h3 style={{ margin: 0, fontSize: "1rem" }}>{previewData.title}</h3>
-            <span className="badge badge-neutral">{previewData.total_records} Records</span>
+        <div className="card" style={{ padding: 0, overflow: "hidden" }}>
+          <div style={{ padding: "1rem 1.5rem", borderBottom: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: "700" }}>{previewData.title}</h3>
+            <span className="user-role-badge" style={{ background: "var(--surface-subtle)", color: "var(--text-main)" }}>
+              {previewData.total_records} Records
+            </span>
           </div>
-          <div style={{ overflowX: "auto" }}>
-            <table className="data-table">
+          <div className="spip-table-container">
+            <table className="spip-table">
               <thead>
                 <tr>
                   {previewData.headers.map((h, i) => (
@@ -296,8 +304,15 @@ export function ReportsPage() {
                 {previewData.rows.map((row, rowIndex) => (
                   <tr key={rowIndex}>
                     {row.map((cell, cellIndex) => (
-                      <td key={cellIndex} style={{ whiteSpace: "nowrap" }}>
-                        {cell === null || cell === "" ? "-" : String(cell)}
+                      <td
+                        key={cellIndex}
+                        style={{
+                          whiteSpace: cellIndex === previewData.headers.length - 1 ? "normal" : "nowrap",
+                          textAlign: typeof cell === "number" ? "right" : "left",
+                          fontWeight: cellIndex === 0 || cellIndex === 2 ? "600" : "normal",
+                        }}
+                      >
+                        {cell === null || cell === "" ? "—" : String(cell)}
                       </td>
                     ))}
                   </tr>

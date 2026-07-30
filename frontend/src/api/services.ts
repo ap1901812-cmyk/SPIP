@@ -1,6 +1,7 @@
 import { fetchApi, setToken } from "./client";
 import type {
   Allocation,
+  ChangePasswordPayload,
   ForecastCalculationResult,
   IngestionResult,
   InventorySnapshot,
@@ -10,20 +11,30 @@ import type {
   Plant,
   PurchaseOrder,
   SapStatusResponse,
+  UserCreatePayload,
   UserProfile,
+  UserResetPasswordPayload,
+  UserStatusPayload,
+  UserUpdatePayload,
   Vendor,
 } from "./types";
 
 export const authApi = {
-  login: async (email: string, password: string): Promise<LoginResponse> => {
+  login: async (username: string, password: string): Promise<LoginResponse> => {
     const res = await fetchApi<LoginResponse>("/auth/login", {
       method: "POST",
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ username, password }),
     });
     setToken(res.access_token);
     return res;
   },
 
+  changePassword: async (payload: ChangePasswordPayload): Promise<{ message: string }> => {
+    return fetchApi<{ message: string }>("/auth/change-password", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
 
   getCurrentUser: async (): Promise<UserProfile> => {
     return fetchApi<UserProfile>("/auth/me");
@@ -32,6 +43,31 @@ export const authApi = {
   logout: () => {
     setToken(null);
   },
+};
+
+export const usersApi = {
+  getUsers: (): Promise<UserProfile[]> => fetchApi<UserProfile[]>("/users"),
+  getUser: (id: number): Promise<UserProfile> => fetchApi<UserProfile>(`/users/${id}`),
+  createUser: (payload: UserCreatePayload): Promise<UserProfile & { temporary_password?: string }> =>
+    fetchApi<UserProfile & { temporary_password?: string }>("/users", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+  updateUser: (id: number, payload: UserUpdatePayload): Promise<UserProfile> =>
+    fetchApi<UserProfile>(`/users/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    }),
+  resetPassword: (id: number, payload: UserResetPasswordPayload): Promise<{ message: string; temporary_password?: string }> =>
+    fetchApi<{ message: string; temporary_password?: string }>(`/users/${id}/reset-password`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+  updateStatus: (id: number, payload: UserStatusPayload): Promise<UserProfile> =>
+    fetchApi<UserProfile>(`/users/${id}/status`, {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    }),
 };
 
 export const domainApi = {

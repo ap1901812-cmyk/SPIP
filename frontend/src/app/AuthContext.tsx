@@ -7,8 +7,9 @@ import type { UserProfile } from "../api/types";
 interface AuthContextType {
   user: UserProfile | null;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (username: string, password: string) => Promise<void>;
   logout: () => void;
+  reloadUser: () => Promise<void>;
   hasRole: (allowedRoles: string[]) => boolean;
 }
 
@@ -44,27 +45,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [loadCurrentUser, logout]);
 
-  const login = async (email: string, password: string) => {
-
+  const login = async (username: string, password: string) => {
     setIsLoading(true);
     try {
-      await authApi.login(email, password);
+      await authApi.login(username, password);
       await loadCurrentUser();
     } finally {
       setIsLoading(false);
     }
   };
 
+  const reloadUser = async () => {
+    await loadCurrentUser();
+  };
+
   const hasRole = useCallback(
     (allowedRoles: string[]): boolean => {
       if (!user || !user.roles) return false;
-      return user.roles.some((r) => allowedRoles.includes(r));
+      return user.roles.some((r) => {
+        if (allowedRoles.includes(r)) return true;
+        if (r === "Manager/Approver" && allowedRoles.includes("Manager")) return true;
+        if (r === "Manager" && allowedRoles.includes("Manager/Approver")) return true;
+        return false;
+      });
     },
     [user]
   );
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, logout, hasRole }}>
+    <AuthContext.Provider value={{ user, isLoading, login, logout, reloadUser, hasRole }}>
       {children}
     </AuthContext.Provider>
   );

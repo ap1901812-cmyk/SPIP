@@ -72,7 +72,7 @@ export function IngestionPage() {
                 <span className="user-role-badge" style={{ background: "var(--surface-subtle)", color: "var(--text-main)" }}>
                   {sapStatus.adapter_mode.toUpperCase()}
                 </span>
-                {sapStatus.is_mock && <span className="badge-status HEALTHY">Demo Active</span>}
+                {sapStatus.is_mock && <span className="badge-status HEALTHY">Mock Mode</span>}
               </div>
               <p style={{ margin: 0, fontSize: "0.85rem", color: "var(--text-muted)" }}>
                 {sapStatus.message}
