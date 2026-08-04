@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
 from app.core.errors import AppError
-from app.db.models.domain import Material, Plant, PlantMaterial
+from app.db.models.domain import BOM, Material, Plant, PlantMaterial
 from app.schemas.planning import PlanningCalculationResult
 from app.services.planning.consumption_intelligence import analyze_consumption_intelligence
 from app.services.planning.inventory_intelligence import analyze_inventory_intelligence
@@ -103,7 +103,9 @@ def evaluate_material_planning(
 
     # 6. Requirement Resolution Engine
     from app.services.forecasting.engine import generate_demand_forecast
+    from app.services.planning.pm_planning import evaluate_pm_planning
     from app.services.planning.requirement_resolution import resolve_planning_requirement
+    from app.services.planning.rm_totality import build_and_evaluate_rm_totality
 
     try:
         fc_res = generate_demand_forecast(db, plant.code, material.code, horizon_days=horizon_days)
@@ -119,7 +121,32 @@ def evaluate_material_planning(
         historical_daily_qty=c_intel.average_daily_demand,
     )
 
-    # 7. RMPM Material Status Decision Tree
+    # 7. Phase 6 Engine Integrations (RM Totality & PM Planning)
+    totality_group_name: str | None = None
+    contributing_fg_count: int = 0
+    rm_explanation: str | None = None
+    is_pm_overridden: bool = False
+    pm_override_ratio: float | None = None
+
+    if material.material_type == "RM":
+        rm_res = build_and_evaluate_rm_totality(
+            db, plant.id, material.id, req_res.final_planning_requirement
+        )
+        totality_group_name = rm_res.totality_group_name
+        contributing_fg_count = len(rm_res.contributing_fgs)
+        rm_explanation = rm_res.planning_explanation
+
+    elif material.material_type == "PM":
+        # Find associated FG
+        bom = db.query(BOM).filter(BOM.component_material_id == material.id).first()
+        fg_id = bom.fg_material_id if bom else material.id
+        pm_res = evaluate_pm_planning(
+            db, plant.id, material.id, fg_id, req_res.final_planning_requirement
+        )
+        is_pm_overridden = pm_res.is_overridden
+        pm_override_ratio = pm_res.override_ratio
+
+    # 8. RMPM Material Status Decision Tree
     ai = inv_intel.planning_available_inventory
     rmpm_status: str
     legacy_status: Literal["CRITICAL", "WARNING", "HEALTHY"]
@@ -195,6 +222,11 @@ def evaluate_material_planning(
         final_planning_requirement=req_res.final_planning_requirement,
         requirement_source=req_res.requirement_source,
         requirement_resolution_reason=req_res.resolution_reason,
+        totality_group_name=totality_group_name,
+        contributing_fg_count=contributing_fg_count,
+        rm_planning_explanation=rm_explanation,
+        is_pm_overridden=is_pm_overridden,
+        pm_override_ratio=pm_override_ratio,
         rmpm_material_status=rmpm_status,
         criticality_status=legacy_status,
         explanation=explanation,

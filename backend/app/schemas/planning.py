@@ -67,6 +67,13 @@ class PlanningCalculationResult(BaseModel):
     requirement_source: str = Field("HISTORICAL_CONSUMPTION", description="Source of resolved requirement (IBP_DAILY, MONTHLY_SCHEDULE, STATISTICAL_FORECAST, HISTORICAL_CONSUMPTION)")
     requirement_resolution_reason: str = Field("", description="Explainable rationale for resolved requirement selection")
 
+    # Phase 6 RM Totality & PM Planning Outputs
+    totality_group_name: str | None = Field(None, description="RM Totality Group Name for RM planning")
+    contributing_fg_count: int = Field(0, description="Number of contributing Finished Goods driving RM demand")
+    rm_planning_explanation: str | None = Field(None, description="Explainable rationale for RM Totality calculation")
+    is_pm_overridden: bool = Field(False, description="Whether PM planning quantity is overridden by planner")
+    pm_override_ratio: float | None = Field(None, description="PM planner override ratio if applicable")
+
     # Deterministic status & explainability
     rmpm_material_status: str = Field("HEALTHY", description="RMPM 4-tier status (CRITICAL, REORDER_REQUIRED, LOW_STOCK, HEALTHY)")
     criticality_status: Literal["CRITICAL", "WARNING", "HEALTHY"]
