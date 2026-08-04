@@ -598,12 +598,14 @@ class ProcurementRecommendation(Base):
     recommended_vendor_id: Mapped[int | None] = mapped_column(
         Integer, ForeignKey("vendors.id", ondelete="SET NULL"), nullable=True, index=True
     )
+    recommended_procurement_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     dispatch_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     expected_arrival_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     priority: Mapped[str] = mapped_column(String(20), nullable=False, default="MEDIUM")
     planning_mode: Mapped[str] = mapped_column(String(20), nullable=False, default="PROACTIVE")
     status: Mapped[str] = mapped_column(String(30), nullable=False, default="RECOMMENDED", index=True)
     reason: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    explanation_json: Mapped[str | None] = mapped_column(String(4000), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

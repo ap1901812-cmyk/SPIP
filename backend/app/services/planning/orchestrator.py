@@ -36,8 +36,8 @@ class PipelineExecutionMetadata(BaseModel):
 
 class UnifiedPlanningResult(BaseModel):
     plant_code: str
-    material_code: str
-    material_type: str
+    material_code: str | None = None
+    material_type: str | None = None
     as_of_timestamp: datetime
     execution_metadata: PipelineExecutionMetadata
     intermediate_results: dict[str, Any] = Field(default_factory=dict)
@@ -65,9 +65,21 @@ def execute_full_planning_pipeline(
     if not plant:
         raise ValueError(f"Plant '{plant_code}' not found.")
 
-    material = db.query(Material).filter(Material.code == material_code).first()
-    if not material:
-        raise ValueError(f"Material '{material_code}' not found.")
+    material = None
+    if material_code:
+        material = db.query(Material).filter(Material.code == material_code).first()
+        if not material:
+            raise ValueError(f"Material '{material_code}' not found.")
+    else:
+        pm = db.query(PlantMaterial).filter(PlantMaterial.plant_id == plant.id).first()
+        if pm:
+            material = pm.material
+        else:
+            material = db.query(Material).first()
+
+    mat_id = material.id if material else 1
+    mat_code = material.code if material else "ALL"
+    mat_type = material.material_type if material else "RM"
 
     modules_executed: list[str] = []
     modules_skipped: list[str] = []
@@ -139,7 +151,7 @@ def execute_full_planning_pipeline(
 
             # Step 6: Forecasting
             try:
-                fc_res = generate_demand_forecast(db, plant_code, material_code, horizon_days=horizon_days)
+                fc_res = generate_demand_forecast(db, plant_code, mat_code, horizon_days=horizon_days)
                 fc_daily = fc_res.average_forecasted_daily_demand
                 results["forecasting"] = fc_res.model_dump()
             except Exception:
