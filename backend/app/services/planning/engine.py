@@ -101,7 +101,25 @@ def evaluate_material_planning(
     trigger_1 = round(demand_during_lt1 + ss_res.safety_stock_1, 4)
     trigger_2 = round(demand_during_lt2 + ss_res.safety_stock_2, 4)
 
-    # 6. RMPM Material Status Decision Tree
+    # 6. Requirement Resolution Engine
+    from app.services.forecasting.engine import generate_demand_forecast
+    from app.services.planning.requirement_resolution import resolve_planning_requirement
+
+    try:
+        fc_res = generate_demand_forecast(db, plant.code, material.code, horizon_days=horizon_days)
+        fc_daily = fc_res.average_forecasted_daily_demand
+    except Exception:
+        fc_daily = 0.0
+
+    req_res = resolve_planning_requirement(
+        db,
+        plant_id=plant.id,
+        material_id=material.id,
+        forecast_daily_qty=fc_daily,
+        historical_daily_qty=c_intel.average_daily_demand,
+    )
+
+    # 7. RMPM Material Status Decision Tree
     ai = inv_intel.planning_available_inventory
     rmpm_status: str
     legacy_status: Literal["CRITICAL", "WARNING", "HEALTHY"]
@@ -174,6 +192,9 @@ def evaluate_material_planning(
         trigger_2=trigger_2,
         demand_during_lead_time=demand_during_lt1,
         reorder_point=trigger_1,
+        final_planning_requirement=req_res.final_planning_requirement,
+        requirement_source=req_res.requirement_source,
+        requirement_resolution_reason=req_res.resolution_reason,
         rmpm_material_status=rmpm_status,
         criticality_status=legacy_status,
         explanation=explanation,

@@ -530,9 +530,31 @@ class SimulationRun(Base):
     scenario_name: Mapped[str] = mapped_column(String(100), nullable=False)
     input_params_json: Mapped[str] = mapped_column(String(4000), nullable=False)
     results_json: Mapped[str | None] = mapped_column(String(4000), nullable=True)
+    user: Mapped[User] = relationship("User", lazy="joined")
+
+
+class ForecastRecord(Base):
+    __tablename__ = "forecast_records"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    plant_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("plants.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    material_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("materials.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    model_name: Mapped[str] = mapped_column(String(50), nullable=False, default="MOVING_AVERAGE")
+    forecast_date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
+    forecast_horizon_days: Mapped[int] = mapped_column(Integer, nullable=False, default=30)
+    forecast_quantity: Mapped[float] = mapped_column(Float, nullable=False)
+    actual_consumption: Mapped[float | None] = mapped_column(Float, nullable=True)
+    wmape_score: Mapped[float | None] = mapped_column(Float, nullable=True)
+    confidence_score: Mapped[float] = mapped_column(Float, nullable=False, default=1.0)
+    details_json: Mapped[str | None] = mapped_column(String(2000), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
 
-    user: Mapped[User] = relationship("User", lazy="joined")
+    plant: Mapped[Plant] = relationship("Plant", lazy="joined")
+    material: Mapped[Material] = relationship("Material", lazy="joined")
 

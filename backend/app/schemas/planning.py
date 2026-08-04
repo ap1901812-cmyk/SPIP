@@ -62,6 +62,11 @@ class PlanningCalculationResult(BaseModel):
     demand_during_lead_time: float = Field(..., description="Demand during lead time D x LT")
     reorder_point: float = Field(..., description="Legacy Reorder point ROP = (D x LT) + SS")
 
+    # Resolved Requirement Engine Outputs
+    final_planning_requirement: float = Field(0.0, description="Resolved single authoritative daily planning requirement")
+    requirement_source: str = Field("HISTORICAL_CONSUMPTION", description="Source of resolved requirement (IBP_DAILY, MONTHLY_SCHEDULE, STATISTICAL_FORECAST, HISTORICAL_CONSUMPTION)")
+    requirement_resolution_reason: str = Field("", description="Explainable rationale for resolved requirement selection")
+
     # Deterministic status & explainability
     rmpm_material_status: str = Field("HEALTHY", description="RMPM 4-tier status (CRITICAL, REORDER_REQUIRED, LOW_STOCK, HEALTHY)")
     criticality_status: Literal["CRITICAL", "WARNING", "HEALTHY"]
