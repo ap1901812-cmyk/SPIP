@@ -1,12 +1,9 @@
 from __future__ import annotations
 
-import enum
+import json
 from datetime import date, datetime
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from app.db.models.user import User
-
+from enum import StrEnum
+from typing import Any
 
 from sqlalchemy import (
     Boolean,
@@ -22,44 +19,44 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
+from app.db.models.user import User
 
 
-class AllocationStatusEnum(enum.StrEnum):
-    DRAFT = "DRAFT"
-    PENDING_APPROVAL = "PENDING_APPROVAL"
-    APPROVED = "APPROVED"
-    REJECTED = "REJECTED"
-
-
-class MaterialTypeEnum(enum.StrEnum):
-    FG = "FG"
+class MaterialTypeEnum(StrEnum):
     RM = "RM"
     PM = "PM"
+    FG = "FG"
 
     @classmethod
     def normalize(cls, val: str | None) -> str:
         if not val:
             return cls.RM.value
-        val_upper = val.strip().upper()
-        if val_upper in ("FG", "FINISHED_GOOD", "FINISHED_GOODS"):
+        v = str(val).upper()
+        if "FINISHED" in v or v == "FG":
             return cls.FG.value
-        if val_upper in ("PM", "PACKAGING", "PACKAGING_MATERIAL"):
+        if "PACKAGING" in v or v == "PM":
             return cls.PM.value
-        if val_upper in ("RM", "RAW_MATERIAL", "RAW_MATERIALS", "CHEMICAL"):
-            return cls.RM.value
-        return val_upper
+        return cls.RM.value
 
     @classmethod
-    def is_pm(cls, val: str | None) -> bool:
-        return cls.normalize(val) == cls.PM.value
+    def is_fg(cls, val: str | None) -> bool:
+        return cls.normalize(val) == cls.FG.value
 
     @classmethod
     def is_rm(cls, val: str | None) -> bool:
         return cls.normalize(val) == cls.RM.value
 
     @classmethod
-    def is_fg(cls, val: str | None) -> bool:
-        return cls.normalize(val) == cls.FG.value
+    def is_pm(cls, val: str | None) -> bool:
+        return cls.normalize(val) == cls.PM.value
+
+
+class AllocationStatusEnum(StrEnum):
+    DRAFT = "DRAFT"
+    SUBMITTED = "SUBMITTED"
+    PENDING_APPROVAL = "PENDING_APPROVAL"
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
 
 
 class Plant(Base):
@@ -69,6 +66,7 @@ class Plant(Base):
     code: Mapped[str] = mapped_column(String(20), unique=True, index=True, nullable=False)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     location: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -76,9 +74,28 @@ class Plant(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
     )
 
-    plant_materials: Mapped[list[PlantMaterial]] = relationship(
-        "PlantMaterial", back_populates="plant"
+    plant_users: Mapped[list[UserPlant]] = relationship(
+        "UserPlant", back_populates="plant", cascade="all, delete-orphan"
     )
+    plant_materials: Mapped[list[PlantMaterial]] = relationship(
+        "PlantMaterial", back_populates="plant", cascade="all, delete-orphan"
+    )
+
+
+class UserPlant(Base):
+    __tablename__ = "user_plants"
+    __table_args__ = (UniqueConstraint("user_id", "plant_id", name="uq_user_plant"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    plant_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("plants.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+
+    user: Mapped[User] = relationship("User", lazy="joined")
+    plant: Mapped[Plant] = relationship("Plant", back_populates="plant_users")
 
 
 class Material(Base):
@@ -87,8 +104,8 @@ class Material(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     code: Mapped[str] = mapped_column(String(50), unique=True, index=True, nullable=False)
     description: Mapped[str] = mapped_column(String(255), nullable=False)
-    material_type: Mapped[str] = mapped_column(String(50), nullable=False, default=MaterialTypeEnum.RM.value)
-    material_group: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    material_type: Mapped[str] = mapped_column(String(50), nullable=False, default="RAW")
+    material_group: Mapped[str | None] = mapped_column(String(100), nullable=True)
     storage_capacity_limit: Mapped[float | None] = mapped_column(Float, nullable=True)
     base_uom: Mapped[str] = mapped_column(String(20), nullable=False, default="KG")
     created_at: Mapped[datetime] = mapped_column(
@@ -146,58 +163,96 @@ class PlantMaterial(Base):
     __tablename__ = "plant_materials"
     __table_args__ = (UniqueConstraint("plant_id", "material_id", name="uq_plant_material"),)
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     plant_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("plants.id", ondelete="CASCADE"), nullable=False, index=True
     )
     material_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("materials.id", ondelete="CASCADE"), nullable=False, index=True
     )
-    abc_class: Mapped[str] = mapped_column(String(5), nullable=False, default="B")
+    abc_class: Mapped[str] = mapped_column(String(10), nullable=False, default="B")
     service_level_z: Mapped[float] = mapped_column(Float, nullable=False, default=1.65)
     review_period_days: Mapped[int] = mapped_column(Integer, nullable=False, default=7)
-    min_safety_stock: Mapped[float | None] = mapped_column(Float, nullable=True, default=0.0)
+    min_safety_stock: Mapped[float | None] = mapped_column(Float, nullable=True)
     max_safety_stock: Mapped[float | None] = mapped_column(Float, nullable=True)
-    lead_time_days: Mapped[float] = mapped_column(Float, nullable=False, default=7.0)
-    safety_stock_override: Mapped[float | None] = mapped_column(Float, nullable=True)
+    lead_time_days: Mapped[float | None] = mapped_column(Float, default=0.0, nullable=True)
     lead_time_1: Mapped[float | None] = mapped_column(Float, nullable=True)
     lead_time_2: Mapped[float | None] = mapped_column(Float, nullable=True)
+    safety_stock: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
+    reorder_point: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
     safety_stock_1: Mapped[float | None] = mapped_column(Float, nullable=True)
     safety_stock_2: Mapped[float | None] = mapped_column(Float, nullable=True)
     trigger_1: Mapped[float | None] = mapped_column(Float, nullable=True)
     trigger_2: Mapped[float | None] = mapped_column(Float, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
+    material_status: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    safety_stock_override: Mapped[float | None] = mapped_column(Float, nullable=True)
+    is_safety_stock_overridden: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    overridden_safety_stock_1: Mapped[float | None] = mapped_column(Float, nullable=True)
+    overridden_safety_stock_2: Mapped[float | None] = mapped_column(Float, nullable=True)
+
+    plant: Mapped[Plant] = relationship("Plant", back_populates="plant_materials")
+    material: Mapped[Material] = relationship("Material", back_populates="plant_materials")
+
+
+class Inventory(Base):
+    __tablename__ = "inventory"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    plant_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("plants.id", ondelete="CASCADE"), nullable=False, index=True
     )
-    updated_at: Mapped[datetime] = mapped_column(
+    material_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("materials.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    quantity: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    batch_number: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    storage_location: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    last_updated: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
     )
 
-    plant: Mapped[Plant] = relationship(
-        "Plant", back_populates="plant_materials", lazy="joined"
+    plant: Mapped[Plant] = relationship("Plant", lazy="joined")
+    material: Mapped[Material] = relationship("Material", lazy="joined")
+
+
+class InventorySnapshot(Base):
+    __tablename__ = "inventory_snapshots"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    plant_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("plants.id", ondelete="CASCADE"), nullable=False, index=True
     )
-    material: Mapped[Material] = relationship(
-        "Material", back_populates="plant_materials", lazy="joined"
+    material_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("materials.id", ondelete="CASCADE"), nullable=False, index=True
     )
+    snapshot_date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
+    usable_physical_stock: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    unrestricted_stock: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    reserved_stock: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    blocked_stock: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    quality_inspection_stock: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    in_transit_stock: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    uom: Mapped[str] = mapped_column(String(20), nullable=False, default="KG")
+    source: Mapped[str] = mapped_column(String(50), nullable=False, default="SAP_MB5B")
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    plant: Mapped[Plant] = relationship("Plant", lazy="joined")
+    material: Mapped[Material] = relationship("Material", lazy="joined")
 
 
 class Vendor(Base):
     __tablename__ = "vendors"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    code: Mapped[str] = mapped_column(String(20), unique=True, index=True, nullable=False)
+    code: Mapped[str] = mapped_column(String(50), unique=True, index=True, nullable=False)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     contact_email: Mapped[str | None] = mapped_column(String(255), nullable=True)
     capacity_per_day: Mapped[float | None] = mapped_column(Float, nullable=True)
     lead_time_1_days: Mapped[float | None] = mapped_column(Float, nullable=True)
     lead_time_2_days: Mapped[float | None] = mapped_column(Float, nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
-    )
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
-    )
 
 
 class VendorMaterial(Base):
@@ -253,51 +308,33 @@ class ConsumptionHistory(Base):
     material: Mapped[Material] = relationship("Material", lazy="joined")
 
 
-class InventorySnapshot(Base):
-    __tablename__ = "inventory_snapshots"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    plant_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("plants.id", ondelete="CASCADE"), nullable=False, index=True
-    )
-    material_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("materials.id", ondelete="CASCADE"), nullable=False, index=True
-    )
-    snapshot_date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
-    usable_physical_stock: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
-    reserved_stock: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
-    blocked_stock: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
-    uom: Mapped[str] = mapped_column(String(20), nullable=False)
-    source: Mapped[str] = mapped_column(String(50), nullable=False, default="SAP_MB5B")
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
-    )
-
-    plant: Mapped[Plant] = relationship("Plant", lazy="joined")
-    material: Mapped[Material] = relationship("Material", lazy="joined")
-
-
 class PurchaseOrder(Base):
     __tablename__ = "purchase_orders"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     po_number: Mapped[str] = mapped_column(String(50), unique=True, index=True, nullable=False)
-    vendor_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("vendors.id", ondelete="CASCADE"), nullable=False, index=True
-    )
     plant_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("plants.id", ondelete="CASCADE"), nullable=False, index=True
     )
-    status: Mapped[str] = mapped_column(String(30), nullable=False, default="OPEN")
-    po_date: Mapped[date] = mapped_column(Date, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
+    material_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("materials.id", ondelete="CASCADE"), nullable=True, index=True
     )
+    vendor_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("vendors.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    ordered_quantity: Mapped[float | None] = mapped_column(Float, nullable=True)
+    delivered_quantity: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    order_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    po_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    expected_delivery_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    actual_delivery_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    status: Mapped[str] = mapped_column(String(50), nullable=False, default="OPEN", index=True)
 
-    vendor: Mapped[Vendor] = relationship("Vendor", lazy="joined")
     plant: Mapped[Plant] = relationship("Plant", lazy="joined")
+    material: Mapped[Material | None] = relationship("Material", lazy="joined")
+    vendor: Mapped[Vendor] = relationship("Vendor", lazy="joined")
     lines: Mapped[list[PurchaseOrderLine]] = relationship(
-        "PurchaseOrderLine", back_populates="po", cascade="all, delete-orphan", lazy="joined"
+        "PurchaseOrderLine", back_populates="purchase_order", cascade="all, delete-orphan"
     )
 
 
@@ -308,20 +345,19 @@ class PurchaseOrderLine(Base):
     po_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("purchase_orders.id", ondelete="CASCADE"), nullable=False, index=True
     )
-    line_number: Mapped[int] = mapped_column(Integer, nullable=False)
+    line_number: Mapped[int] = mapped_column(Integer, nullable=False, default=10)
+    line_item_number: Mapped[int | None] = mapped_column(Integer, nullable=True)
     material_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("materials.id", ondelete="CASCADE"), nullable=False, index=True
     )
-    order_quantity: Mapped[float] = mapped_column(Float, nullable=False)
-    open_quantity: Mapped[float] = mapped_column(Float, nullable=False)
-    uom: Mapped[str] = mapped_column(String(20), nullable=False)
-    expected_delivery_date: Mapped[date] = mapped_column(Date, nullable=False)
-    status: Mapped[str] = mapped_column(String(30), nullable=False, default="CONFIRMED")
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
-    )
+    quantity: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    order_quantity: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    open_quantity: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    uom: Mapped[str] = mapped_column(String(20), nullable=False, default="KG")
+    expected_delivery_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    status: Mapped[str] = mapped_column(String(30), nullable=False, default="OPEN")
 
-    po: Mapped[PurchaseOrder] = relationship("PurchaseOrder", back_populates="lines")
+    purchase_order: Mapped[PurchaseOrder] = relationship("PurchaseOrder", back_populates="lines", lazy="joined")
     material: Mapped[Material] = relationship("Material", lazy="joined")
 
 
@@ -329,9 +365,7 @@ class Allocation(Base):
     __tablename__ = "allocations"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    allocation_number: Mapped[str] = mapped_column(
-        String(50), unique=True, index=True, nullable=False
-    )
+    allocation_number: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=False)
     plant_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("plants.id", ondelete="CASCADE"), nullable=False, index=True
     )
@@ -343,25 +377,16 @@ class Allocation(Base):
     )
     allocated_quantity: Mapped[float] = mapped_column(Float, nullable=False)
     uom: Mapped[str] = mapped_column(String(20), nullable=False, default="KG")
-    status: Mapped[str] = mapped_column(
-        String(30), nullable=False, default=AllocationStatusEnum.DRAFT.value, index=True
-    )
-
-    created_by_user_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("users.id", ondelete="RESTRICT"), nullable=False, index=True
+    status: Mapped[str] = mapped_column(String(50), nullable=False, default="DRAFT", index=True)
+    created_by_user_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
     )
     approved_by_user_id: Mapped[int | None] = mapped_column(
         Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
     )
-    rejection_reason: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    rejection_reason: Mapped[str | None] = mapped_column(String(255), nullable=True)
     sap_reference_id: Mapped[str | None] = mapped_column(String(50), nullable=True)
     version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
-    vehicle_capacity_used: Mapped[float | None] = mapped_column(Float, nullable=True)
-    proactive_flag: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
-    recommendation_reason: Mapped[str | None] = mapped_column(String(500), nullable=True)
-    dispatch_date: Mapped[date | None] = mapped_column(Date, nullable=True)
-    expected_arrival_date: Mapped[date | None] = mapped_column(Date, nullable=True)
-
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -372,12 +397,107 @@ class Allocation(Base):
     plant: Mapped[Plant] = relationship("Plant", lazy="joined")
     material: Mapped[Material] = relationship("Material", lazy="joined")
     vendor: Mapped[Vendor | None] = relationship("Vendor", lazy="joined")
-    created_by_user: Mapped[User] = relationship(
-        "User", foreign_keys=[created_by_user_id], lazy="joined"
+    created_by_user: Mapped[User | None] = relationship("User", foreign_keys=[created_by_user_id], lazy="joined")
+    approved_by_user: Mapped[User | None] = relationship("User", foreign_keys=[approved_by_user_id], lazy="joined")
+
+
+class VendorCapacity(Base):
+    __tablename__ = "vendor_capacities"
+    __table_args__ = (
+        UniqueConstraint("vendor_id", "material_id", "plant_id", name="uq_vendor_capacity_plant"),
     )
-    approved_by_user: Mapped[User | None] = relationship(
-        "User", foreign_keys=[approved_by_user_id], lazy="joined"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    vendor_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("vendors.id", ondelete="CASCADE"), nullable=False, index=True
     )
+    material_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("materials.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    plant_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("plants.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    monthly_capacity: Mapped[float] = mapped_column(Float, nullable=False, default=10000.0)
+    current_allocated_qty: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    min_order_qty: Mapped[float] = mapped_column(Float, nullable=False, default=100.0)
+    lead_time_days: Mapped[int] = mapped_column(Integer, nullable=False, default=14)
+    price_per_unit: Mapped[float] = mapped_column(Float, nullable=False, default=10.0)
+    is_primary: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+    vendor: Mapped[Vendor] = relationship("Vendor", lazy="joined")
+    material: Mapped[Material] = relationship("Material", lazy="joined")
+    plant: Mapped[Plant] = relationship("Plant", lazy="joined")
+
+
+class VendorAllocation(Base):
+    __tablename__ = "vendor_allocations"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    plant_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("plants.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    material_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("materials.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    vendor_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("vendors.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    allocated_quantity: Mapped[float] = mapped_column(Float, nullable=False)
+    allocation_percentage: Mapped[float] = mapped_column(Float, nullable=False)
+    allocation_reason: Mapped[str] = mapped_column(String(255), nullable=False)
+    status: Mapped[str] = mapped_column(String(50), nullable=False, default="RECOMMENDED", index=True)
+    allocated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    plant: Mapped[Plant] = relationship("Plant", lazy="joined")
+    material: Mapped[Material] = relationship("Material", lazy="joined")
+    vendor: Mapped[Vendor] = relationship("Vendor", lazy="joined")
+
+
+class ManagerQueue(Base):
+    __tablename__ = "manager_queue"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    plant_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("plants.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    material_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("materials.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    vendor_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("vendors.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    suggested_qty: Mapped[float] = mapped_column(Float, nullable=False)
+    overridden_qty: Mapped[float | None] = mapped_column(Float, nullable=True)
+    final_qty: Mapped[float] = mapped_column(Float, nullable=False)
+    status: Mapped[str] = mapped_column(String(50), nullable=False, default="PENDING", index=True)
+    requested_by_user_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    approved_by_user_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+    rejection_reason: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    sap_po_number: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+    plant: Mapped[Plant] = relationship("Plant", lazy="joined")
+    material: Mapped[Material] = relationship("Material", lazy="joined")
+    vendor: Mapped[Vendor] = relationship("Vendor", lazy="joined")
+    requested_by: Mapped[User] = relationship("User", foreign_keys=[requested_by_user_id], lazy="joined")
+    approved_by: Mapped[User | None] = relationship("User", foreign_keys=[approved_by_user_id], lazy="joined")
 
 
 class RMTotalityMapping(Base):
@@ -558,3 +678,28 @@ class ForecastRecord(Base):
     plant: Mapped[Plant] = relationship("Plant", lazy="joined")
     material: Mapped[Material] = relationship("Material", lazy="joined")
 
+
+class PlanningExecutionRecord(Base):
+    __tablename__ = "planning_execution_records"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    plant_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("plants.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    material_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("materials.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    execution_status: Mapped[str] = mapped_column(
+        String(30), nullable=False, default="SUCCESS", index=True
+    )
+    duration_ms: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    modules_executed_json: Mapped[str] = mapped_column(String(1000), nullable=False)
+    modules_skipped_json: Mapped[str] = mapped_column(String(1000), nullable=False)
+    failure_reason: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    details_json: Mapped[str | None] = mapped_column(String(4000), nullable=True)
+    executed_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    plant: Mapped[Plant] = relationship("Plant", lazy="joined")
+    material: Mapped[Material | None] = relationship("Material", lazy="joined")

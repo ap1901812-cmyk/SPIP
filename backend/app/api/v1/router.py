@@ -13,6 +13,7 @@ from app.api.v1.routes.inventory import router as inventory_router
 from app.api.v1.routes.jobs import router as jobs_router
 from app.api.v1.routes.materials import router as materials_router
 from app.api.v1.routes.notifications import router as notifications_router
+from app.api.v1.routes.orchestration import router as orchestration_router
 from app.api.v1.routes.planning import router as planning_router
 from app.api.v1.routes.plants import router as plants_router
 from app.api.v1.routes.pm_overrides import router as pm_overrides_router
@@ -41,6 +42,7 @@ api_router.include_router(data_intelligence_router)
 api_router.include_router(readiness_router)
 api_router.include_router(pm_overrides_router)
 api_router.include_router(production_readiness_router)
+api_router.include_router(orchestration_router)
 api_router.include_router(sap_router)
 api_router.include_router(planning_router)
 api_router.include_router(forecasting_router)
