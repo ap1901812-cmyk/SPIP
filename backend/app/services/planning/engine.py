@@ -9,10 +9,10 @@ from app.core.config import get_settings
 from app.core.errors import AppError
 from app.db.models.domain import Material, Plant, PlantMaterial
 from app.schemas.planning import PlanningCalculationResult
-from app.services.planning.availability import calculate_planning_availability
-from app.services.planning.lead_time import resolve_lead_time
-from app.services.planning.safety_stock import calculate_safety_stock
-from app.services.planning.statistics import calculate_demand_statistics
+from app.services.planning.consumption_intelligence import analyze_consumption_intelligence
+from app.services.planning.inventory_intelligence import analyze_inventory_intelligence
+from app.services.planning.lead_time import resolve_dual_lead_time
+from app.services.planning.safety_stock import calculate_dual_safety_stock
 
 
 class PlanningEngineError(AppError):
@@ -28,8 +28,15 @@ def evaluate_material_planning(
     statistics_window_days: int | None = None,
     decision_horizon_days: int | None = None,
 ) -> PlanningCalculationResult:
-    """Evaluates material planning decision rules for a specific plant and material.
-    Returns deterministic, explainable PlanningCalculationResult.
+    """Evaluates material planning decision rules according to RMPM statistical planning methodology.
+
+    Sequence:
+    1. Consumption Intelligence (D_avg, sigma_d, Trend, CV)
+    2. Inventory Intelligence (Stock, PO, Gate Entry, AI, DOI)
+    3. RMPM Dual Lead Times (LT-1, LT-2)
+    4. RMPM Dual Safety Stocks (SS-1, SS-2)
+    5. RMPM Triggers (Trigger-1, Trigger-2)
+    6. RMPM Material Status Decision Tree (CRITICAL, REORDER_REQUIRED, LOW_STOCK, HEALTHY)
     """
     plant = db.query(Plant).filter(Plant.code == plant_code).first()
     if not plant:
@@ -60,53 +67,79 @@ def evaluate_material_planning(
     as_of = as_of_datetime or datetime.now()
     as_of_d = date.today() if as_of_datetime is None else as_of.date()
 
-    # 1. Consumption Statistics
-    stats = calculate_demand_statistics(
+    # 1. Consumption Intelligence Engine
+    c_intel = analyze_consumption_intelligence(
         db, plant.id, material.id, window_days=stat_days, as_of_date=as_of_d
     )
 
-    # 2. Lead Time Resolution
-    lt_res = resolve_lead_time(db, plant.id, material.id, plant_material=pm)
+    # 2. Inventory Intelligence Engine
+    inv_intel = analyze_inventory_intelligence(
+        db,
+        plant.id,
+        material.id,
+        average_daily_demand=c_intel.average_daily_demand,
+        decision_horizon_days=horizon_days,
+        as_of_date=as_of_d,
+    )
 
-    # 3. Safety Stock V1 Calculation
-    ss_res = calculate_safety_stock(
-        demand_std_dev=stats.demand_std_dev,
-        lead_time_days=lt_res.lead_time_days,
+    # 3. RMPM Dual Lead Time Resolution
+    lt_res = resolve_dual_lead_time(db, plant.id, material.id, plant_material=pm)
+
+    # 4. RMPM Dual Safety Stock Calculation
+    ss_res = calculate_dual_safety_stock(
+        demand_std_dev=c_intel.demand_std_dev,
+        lead_time_1=lt_res.lead_time_1,
+        lead_time_2=lt_res.lead_time_2,
         plant_material=pm,
     )
 
-    # 4. Planning Availability Calculation
-    avail_res = calculate_planning_availability(
-        db, plant.id, material.id, decision_horizon_days=horizon_days, as_of_date=as_of_d
-    )
+    # 5. RMPM Reorder Triggers
+    d_avg = c_intel.average_daily_demand
+    demand_during_lt1 = round(d_avg * lt_res.lead_time_1, 4)
+    demand_during_lt2 = round(d_avg * lt_res.lead_time_2, 4)
 
-    # 5. Demand During Lead Time & Reorder Point
-    demand_during_lt = round(stats.average_daily_demand * lt_res.lead_time_days, 4)
-    reorder_point = round(demand_during_lt + ss_res.safety_stock, 4)
+    trigger_1 = round(demand_during_lt1 + ss_res.safety_stock_1, 4)
+    trigger_2 = round(demand_during_lt2 + ss_res.safety_stock_2, 4)
 
-    # 6. Criticality Determination
-    ai = avail_res.planning_availability
-    status: Literal["CRITICAL", "WARNING", "HEALTHY"]
+    # 6. RMPM Material Status Decision Tree
+    ai = inv_intel.planning_available_inventory
+    rmpm_status: str
+    legacy_status: Literal["CRITICAL", "WARNING", "HEALTHY"]
+    explanation: str
 
-    if ai < demand_during_lt:
-        status = "CRITICAL"
-        reason = (
-            f"Planning Availability ({ai:.1f} {material.base_uom}) is below demand during "
-            f"supplier lead time ({demand_during_lt:.1f} {material.base_uom})."
+    # 4-tier RMPM Status
+    if ai < ss_res.safety_stock_2:
+        rmpm_status = "CRITICAL"
+        explanation = (
+            f"CRITICAL: Available Stock ({ai:.1f} {material.base_uom}) has breached Safety Stock 2 "
+            f"({ss_res.safety_stock_2:.1f} {material.base_uom}). Emergency replenishment required immediately."
         )
-    elif demand_during_lt <= ai < reorder_point:
-        status = "WARNING"
-        reason = (
-            f"Planning Availability ({ai:.1f} {material.base_uom}) is between demand during "
-            f"lead time ({demand_during_lt:.1f} {material.base_uom}) and reorder point "
-            f"({reorder_point:.1f} {material.base_uom})."
+    elif ss_res.safety_stock_2 <= ai < trigger_2:
+        rmpm_status = "REORDER_REQUIRED"
+        explanation = (
+            f"REORDER REQUIRED: Available Stock ({ai:.1f} {material.base_uom}) is below Trigger 2 "
+            f"({trigger_2:.1f} {material.base_uom}). Regular replenishment order placement required."
+        )
+    elif trigger_2 <= ai < trigger_1:
+        rmpm_status = "LOW_STOCK"
+        explanation = (
+            f"LOW STOCK: Available Stock ({ai:.1f} {material.base_uom}) is below Trigger 1 "
+            f"({trigger_1:.1f} {material.base_uom}). Monitor supply cycle."
         )
     else:
-        status = "HEALTHY"
-        reason = (
-            f"Planning Availability ({ai:.1f} {material.base_uom}) meets or exceeds "
-            f"reorder point ({reorder_point:.1f} {material.base_uom})."
+        rmpm_status = "HEALTHY"
+        explanation = (
+            f"HEALTHY: Available Stock ({ai:.1f} {material.base_uom}) meets or exceeds Trigger 1 "
+            f"({trigger_1:.1f} {material.base_uom}). Stock level is healthy."
         )
+
+    # Legacy 3-tier Criticality Status (for 100% backward compatibility)
+    if ai < demand_during_lt1:
+        legacy_status = "CRITICAL"
+    elif demand_during_lt1 <= ai < trigger_1:
+        legacy_status = "WARNING"
+    else:
+        legacy_status = "HEALTHY"
 
     return PlanningCalculationResult(
         plant_code=plant.code,
@@ -115,23 +148,33 @@ def evaluate_material_planning(
         material_description=material.description,
         base_uom=material.base_uom,
         as_of_timestamp=as_of,
-        average_daily_demand=stats.average_daily_demand,
-        demand_std_dev=stats.demand_std_dev,
-        observation_days_count=stats.observation_count,
-        lead_time_days=lt_res.lead_time_days,
-        lead_time_source=lt_res.source,
+        average_daily_demand=c_intel.average_daily_demand,
+        demand_std_dev=c_intel.demand_std_dev,
+        observation_days_count=c_intel.observation_days_count,
+        consumption_trend=c_intel.consumption_trend,
+        consumption_variability=c_intel.consumption_variability,
+        lead_time_1=lt_res.lead_time_1,
+        lead_time_2=lt_res.lead_time_2,
+        lead_time_days=lt_res.lead_time_1,
+        lead_time_source=lt_res.source_lt1,
         service_level_z=ss_res.service_level_z,
         abc_class=ss_res.abc_class,
-        safety_stock=ss_res.safety_stock,
+        safety_stock_1=ss_res.safety_stock_1,
+        safety_stock_2=ss_res.safety_stock_2,
+        safety_stock=ss_res.safety_stock_1,
         is_safety_stock_overridden=ss_res.is_overridden,
-        usable_physical_stock=avail_res.usable_physical_stock,
-        reserved_stock_info=avail_res.reserved_stock_info,
-        blocked_stock_info=avail_res.blocked_stock_info,
-        eligible_incoming_po_qty=avail_res.eligible_incoming_po_qty,
-        committed_allocations=avail_res.committed_allocations,
+        usable_physical_stock=inv_intel.usable_physical_stock,
+        reserved_stock_info=inv_intel.reserved_stock,
+        blocked_stock_info=inv_intel.blocked_stock,
+        eligible_incoming_po_qty=inv_intel.incoming_inventory,
+        committed_allocations=inv_intel.committed_allocations,
         planning_availability=ai,
-        demand_during_lead_time=demand_during_lt,
-        reorder_point=reorder_point,
-        criticality_status=status,
-        explanation=reason,
+        days_of_inventory=inv_intel.days_of_inventory,
+        trigger_1=trigger_1,
+        trigger_2=trigger_2,
+        demand_during_lead_time=demand_during_lt1,
+        reorder_point=trigger_1,
+        rmpm_material_status=rmpm_status,
+        criticality_status=legacy_status,
+        explanation=explanation,
     )
