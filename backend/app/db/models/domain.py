@@ -384,6 +384,13 @@ class Allocation(Base):
     approved_by_user_id: Mapped[int | None] = mapped_column(
         Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
     )
+    recommendation_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("procurement_recommendations.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    dispatch_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    expected_arrival_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    allocation_notes: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    notification_payload_json: Mapped[str | None] = mapped_column(String(4000), nullable=True)
     rejection_reason: Mapped[str | None] = mapped_column(String(255), nullable=True)
     sap_reference_id: Mapped[str | None] = mapped_column(String(50), nullable=True)
     version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
@@ -399,6 +406,7 @@ class Allocation(Base):
     vendor: Mapped[Vendor | None] = relationship("Vendor", lazy="joined")
     created_by_user: Mapped[User | None] = relationship("User", foreign_keys=[created_by_user_id], lazy="joined")
     approved_by_user: Mapped[User | None] = relationship("User", foreign_keys=[approved_by_user_id], lazy="joined")
+    recommendation: Mapped[ProcurementRecommendation | None] = relationship("ProcurementRecommendation", lazy="joined")
 
 
 class VendorCapacity(Base):
