@@ -21,6 +21,10 @@ import { PlanningWorkspacePage } from "./pages/PlanningWorkspacePage";
 import { ReportsPage } from "./pages/ReportsPage";
 import { UserManagementPage } from "./pages/UserManagementPage";
 
+import { FormulaExplorerPage } from "./pages/FormulaExplorerPage";
+import { MonitoringPage } from "./pages/MonitoringPage";
+import { SimulationPage } from "./pages/SimulationPage";
+
 import { queryClient } from "./query-client";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -74,6 +78,8 @@ export function App() {
               <Route path="planning" element={<PlanningWorkspacePage />} />
               <Route path="planning/:materialCode" element={<PlanningDetailPage />} />
               <Route path="forecasting" element={<ForecastingPage />} />
+              <Route path="simulations" element={<SimulationPage />} />
+              <Route path="monitoring" element={<MonitoringPage />} />
               <Route path="allocations" element={<AllocationsPage />} />
               <Route path="approvals" element={<ManagerApprovalPage />} />
               <Route
@@ -81,6 +87,14 @@ export function App() {
                 element={
                   <AdminRoute>
                     <UserManagementPage />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path="admin/formulas"
+                element={
+                  <AdminRoute>
+                    <FormulaExplorerPage />
                   </AdminRoute>
                 }
               />

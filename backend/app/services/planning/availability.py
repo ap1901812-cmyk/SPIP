@@ -70,12 +70,14 @@ def calculate_planning_availability(
         reserved_info = 0.0
         blocked_info = 0.0
 
+    from sqlalchemy import or_
+
     # 2. Fetch eligible open purchase order supply
     po_lines = (
         db.query(PurchaseOrderLine)
         .join(PurchaseOrder)
         .filter(
-            PurchaseOrder.plant_id == plant_id,
+            or_(PurchaseOrderLine.plant_id == plant_id, PurchaseOrder.plant_id == plant_id),
             PurchaseOrderLine.material_id == material_id,
             PurchaseOrder.status == "OPEN",
             PurchaseOrderLine.status == "CONFIRMED",

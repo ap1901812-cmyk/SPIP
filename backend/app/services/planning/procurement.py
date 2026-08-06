@@ -125,7 +125,6 @@ def generate_procurement_recommendations(
         primary_vm = (
             db.query(VendorMaterial)
             .filter(
-                VendorMaterial.plant_id == plant.id,
                 VendorMaterial.material_id == mat.id,
                 VendorMaterial.is_primary == True,
             )
@@ -134,7 +133,7 @@ def generate_procurement_recommendations(
         if not primary_vm:
             primary_vm = (
                 db.query(VendorMaterial)
-                .filter(VendorMaterial.plant_id == plant.id, VendorMaterial.material_id == mat.id)
+                .filter(VendorMaterial.material_id == mat.id)
                 .first()
             )
 
@@ -142,7 +141,7 @@ def generate_procurement_recommendations(
         lead_time_days = (
             primary_vm.vendor_lead_time_days
             if primary_vm and primary_vm.vendor_lead_time_days is not None
-            else (pm.lead_time_1 if pm and pm.lead_time_1 is not None else (pm.lead_time_days if pm and pm.lead_time_days is not None else 7.0))
+            else (pm.lead_time_1 if pm and pm.lead_time_1 is not None else 7.0)
         )
 
         # Extract Orchestrator Planning Outputs
@@ -157,7 +156,7 @@ def generate_procurement_recommendations(
         req_source = req_data.get("requirement_source", "HISTORICAL_AVERAGE")
 
         rmpm_data = mod_results.get("rmpm_statistical_planning", {})
-        ss_1 = rmpm_data.get("safety_stock_1", pm.safety_stock_1 if pm and pm.safety_stock_1 else (pm.safety_stock if pm else 0.0))
+        ss_1 = rmpm_data.get("safety_stock_1", pm.safety_stock_1 if pm and pm.safety_stock_1 is not None else 0.0)
         ss_2 = rmpm_data.get("safety_stock_2", pm.safety_stock_2 if pm and pm.safety_stock_2 else 0.0)
         trig_1 = rmpm_data.get("trigger_1", net_available - (daily_req * lead_time_days) - ss_1)
 

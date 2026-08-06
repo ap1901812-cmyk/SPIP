@@ -8,9 +8,11 @@ from sqlalchemy import create_engine, inspect
 
 def test_migration_008_structure() -> None:
     # Dynamically import the alembic migration script
+    from pathlib import Path
+    migration_path = Path(__file__).parent.parent / "alembic" / "versions" / "008_spip_v2_schema.py"
     spec = importlib.util.spec_from_file_location(
         "migration_008",
-        "alembic/versions/008_spip_v2_schema.py",
+        str(migration_path),
     )
     assert spec is not None and spec.loader is not None
     migration_mod = importlib.util.module_from_spec(spec)

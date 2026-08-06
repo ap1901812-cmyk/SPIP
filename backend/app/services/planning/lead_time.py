@@ -45,7 +45,6 @@ def resolve_dual_lead_time(
         primary_vm = (
             db.query(VendorMaterial)
             .filter(
-                VendorMaterial.plant_id == plant_id,
                 VendorMaterial.material_id == material_id,
                 VendorMaterial.is_primary == True,  # noqa: E712
             )

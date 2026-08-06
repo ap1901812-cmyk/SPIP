@@ -333,7 +333,12 @@ class MockSAPAdapter(SAPAdapterInterface):
                             service_level_z=1.65,
                             review_period_days=7,
                             min_safety_stock=0.0,
-                            lead_time_days=7.0,
+                            lead_time_1=7.0,
+                            lead_time_2=3.0,
+                            safety_stock_1=100.0,
+                            safety_stock_2=50.0,
+                            trigger_1=200.0,
+                            trigger_2=100.0,
                         )
                     )
 

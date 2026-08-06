@@ -56,10 +56,10 @@ export const PlanningWorkspacePage: React.FC = () => {
     setSearchParams(newParams);
   };
 
-  const summary = planningResult?.summary || {};
-  const criticalShortages = summary.critical_shortages_count || 0;
-  const warningShortages = summary.warning_shortages_count || 0;
-  const healthyShortages = (summary.total_components_evaluated || 0) - criticalShortages - warningShortages;
+  const summary: Record<string, any> = planningResult?.summary || {};
+  const criticalShortages = Number(summary.critical_shortages_count || 0);
+  const warningShortages = Number(summary.warning_shortages_count || 0);
+  const healthyShortages = Number(summary.total_components_evaluated || 0) - criticalShortages - warningShortages;
 
   // Filter component requirements: Exclude FG (Finished Goods), and filter by ALL / RM / PM
   const filteredComponents = (planningResult?.component_requirements || []).filter((req) => {

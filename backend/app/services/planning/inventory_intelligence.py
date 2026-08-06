@@ -67,12 +67,14 @@ def analyze_inventory_intelligence(
     reserved_stock = float(latest_snapshot.reserved_stock) if latest_snapshot else 0.0
     blocked_stock = float(latest_snapshot.blocked_stock) if latest_snapshot else 0.0
 
+    from sqlalchemy import or_
+
     # 2. Eligible Open Purchase Order Supply
     po_lines = (
         db.query(PurchaseOrderLine)
         .join(PurchaseOrder)
         .filter(
-            PurchaseOrder.plant_id == plant_id,
+            or_(PurchaseOrderLine.plant_id == plant_id, PurchaseOrder.plant_id == plant_id),
             PurchaseOrderLine.material_id == material_id,
             PurchaseOrder.status == "OPEN",
             PurchaseOrderLine.status == "CONFIRMED",

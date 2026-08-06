@@ -95,7 +95,7 @@ def compute_component_shortages(
 
 def compute_procurement_recommendations(
     shortages: list[dict[str, Any]],
-    vendor_map: dict[tuple[str, int], dict[str, Any]],
+    vendor_map: dict[int, dict[str, Any]],
 ) -> list[dict[str, Any]]:
     """Stateless Procurement Recommendation Computation:
     Calculates recommended purchase order quantities honoring MOQ and vendor lead times.
@@ -111,7 +111,7 @@ def compute_procurement_recommendations(
         shortage = item["shortage_quantity"]
         uom = item["base_uom"]
 
-        vend = vendor_map.get((plant_code, comp_id), {})
+        vend = vendor_map.get(comp_id, {})
         min_qty = float(vend.get("min_order_qty") or 0.0)
         lead_time = float(vend.get("vendor_lead_time_days") or 7.0)
 

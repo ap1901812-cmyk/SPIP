@@ -86,9 +86,7 @@ def _seed_phase11_data(db: Session, plant_code: str, mat_code: str) -> tuple[Pla
     vm = VendorMaterial(
         vendor_id=vendor.id,
         material_id=mat.id,
-        plant_id=plant.id,
         is_primary=True,
-        vendor_lead_time_days=10.0,
         min_order_qty=100.0,
     )
     for i in range(1, 15):

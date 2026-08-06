@@ -54,6 +54,29 @@ def list_planning_execution_history(
     return get_planning_execution_history(db=db, plant_code=plant_code, limit=limit)
 
 
+@router.get("/executions/telemetry")
+def get_planning_execution_telemetry(
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+    plant_code: Annotated[str | None, Query(description="Target plant code filter")] = None,
+) -> dict[str, Any]:
+    """Retrieve execution metrics and telemetry statistics for monitoring."""
+    history = get_planning_execution_history(db=db, plant_code=plant_code, limit=100)
+    total_runs = len(history)
+    successful = sum(1 for h in history if h.get("execution_status") == "SUCCESS")
+    failed = sum(1 for h in history if h.get("execution_status") in ("FAILED", "BLOCKED"))
+    durations = [h.get("duration_ms", 0.0) for h in history if h.get("duration_ms")]
+    avg_duration = (sum(durations) / len(durations)) if durations else 0.0
+
+    return {
+        "total_executions": total_runs,
+        "successful_executions": successful,
+        "failed_or_blocked_executions": failed,
+        "average_duration_ms": round(avg_duration, 2),
+        "success_rate_percentage": round((successful / total_runs * 100.0), 1) if total_runs > 0 else 100.0,
+    }
+
+
 @router.get("/executions/{execution_id}")
 def get_planning_execution_report(
     db: Annotated[Session, Depends(get_db)],

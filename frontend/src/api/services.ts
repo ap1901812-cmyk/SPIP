@@ -2,7 +2,11 @@ import { fetchApi, fetchBlob, setToken } from "./client";
 import type {
   Allocation,
   ChangePasswordPayload,
+  DecisionSupportSummaryDTO,
+  ExecutionHistoryItem,
+  ExplainabilityReportDTO,
   ForecastCalculationResult,
+  FormulaEntry,
   IngestionResult,
   InventorySnapshot,
   LoginResponse,
@@ -11,6 +15,8 @@ import type {
   Plant,
   PurchaseOrder,
   SapStatusResponse,
+  SimulationRunItem,
+  TelemetryMetrics,
   UserCreatePayload,
   UserProfile,
   UserResetPasswordPayload,
@@ -18,6 +24,8 @@ import type {
   UserUpdatePayload,
   Vendor,
 } from "./types";
+
+export { fetchApi } from "./client";
 
 export const authApi = {
   login: async (username: string, password: string): Promise<LoginResponse> => {
@@ -191,6 +199,15 @@ export const ingestionApi = {
     });
   },
 
+  uploadWorkbook: (file: File, replaceExisting = false): Promise<import("./types").WorkbookImportReport> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return fetchApi<import("./types").WorkbookImportReport>(`/imports/workbook?replace_existing=${replaceExisting}`, {
+      method: "POST",
+      body: formData,
+    });
+  },
+
   getSapStatus: (): Promise<SapStatusResponse> => fetchApi<SapStatusResponse>("/sap/status"),
 
   syncSapData: (): Promise<{ status: string; adapter_mode: string; synced_counts: Record<string, number> }> => {
@@ -325,3 +342,54 @@ export const fgPlanningApi = {
   },
 };
 
+export const decisionSupportApi = {
+  getSummary: (plantCode: string, materialCode?: string): Promise<DecisionSupportSummaryDTO> => {
+    const params = new URLSearchParams();
+    params.append("plant_code", plantCode);
+    if (materialCode) params.append("material_code", materialCode);
+    return fetchApi<DecisionSupportSummaryDTO>(`/decision-support/summary?${params.toString()}`);
+  },
+
+  getExplainability: (plantCode: string, materialCode: string): Promise<ExplainabilityReportDTO> => {
+    return fetchApi<ExplainabilityReportDTO>(
+      `/decision-support/explainability?plant_code=${encodeURIComponent(plantCode)}&material_code=${encodeURIComponent(materialCode)}`
+    );
+  },
+};
+
+export const monitoringApi = {
+  getTelemetry: (plantCode?: string): Promise<TelemetryMetrics> => {
+    const q = plantCode ? `?plant_code=${encodeURIComponent(plantCode)}` : "";
+    return fetchApi<TelemetryMetrics>(`/planning/executions/telemetry${q}`);
+  },
+
+  getExecutions: (plantCode?: string, limit = 50): Promise<ExecutionHistoryItem[]> => {
+    const params = new URLSearchParams();
+    params.append("limit", String(limit));
+    if (plantCode) params.append("plant_code", plantCode);
+    return fetchApi<ExecutionHistoryItem[]>(`/planning/executions?${params.toString()}`);
+  },
+};
+
+export const simulationApi = {
+  getSimulations: (): Promise<SimulationRunItem[]> => {
+    return fetchApi<SimulationRunItem[]>("/simulations");
+  },
+
+  runSimulation: (payload: Record<string, unknown>): Promise<SimulationRunItem> => {
+    return fetchApi<SimulationRunItem>("/simulations/run", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+
+  getSimulation: (id: number): Promise<SimulationRunItem> => {
+    return fetchApi<SimulationRunItem>(`/simulations/${id}`);
+  },
+};
+
+export const formulaExplorerApi = {
+  getFormulas: (): Promise<FormulaEntry[]> => {
+    return fetchApi<FormulaEntry[]>("/admin/formulas");
+  },
+};

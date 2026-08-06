@@ -350,7 +350,7 @@ export interface AffectedFinishedGood {
 }
 
 export interface FGPlanningResult {
-  summary: Record<string, any>;
+  summary: Record<string, unknown>;
   component_requirements: ComponentRequirement[];
   procurement_recommendations: ProcurementRecommendation[];
   affected_finished_goods: AffectedFinishedGood[];
@@ -367,3 +367,131 @@ export interface RecommendationSummary {
   recommendations: ProcurementRecommendation[];
 }
 
+export interface DecisionSupportSummaryDTO {
+  plant_code: string;
+  material_code?: string | null;
+  generated_at?: string;
+  planning_summary: {
+    readiness_score: number;
+    readiness_state: string;
+    pipeline_execution_status: string;
+  };
+  procurement_summary: {
+    total_recommendations_count: number;
+    critical_priority_count: number;
+    high_priority_count: number;
+    total_allocated_quantity: number;
+  };
+  production_summary: {
+    total_evaluated_fg_count: number;
+    ready_to_produce_fg_count: number;
+    blocked_fg_count: number;
+    production_readiness_percentage: number;
+  };
+  inventory_summary: {
+    usable_physical_stock: number;
+    incoming_po_quantity: number;
+    planning_available_inventory: number;
+    average_daily_demand: number;
+    days_of_inventory: number;
+  };
+  recommendation_summary: Array<{
+    id: number;
+    material_code: string;
+    recommended_qty: number;
+    priority: string;
+    planning_mode: string;
+    status: string;
+    reason: string;
+  }>;
+}
+
+export interface ExplainabilityReportDTO {
+  plant_code: string;
+  material_code: string;
+  material_description: string;
+  material_type: string;
+  source_data_used: Array<{ entity: string; source: string; description: string }>;
+  planning_modules_involved: string[];
+  business_rules_applied: string[];
+  constraints_applied: Record<string, any>;
+  intermediate_calculations: Record<string, any>;
+  final_recommendation: Record<string, any>;
+  confidence_indicators: Record<string, any>;
+}
+
+export interface TelemetryMetrics {
+  total_executions: number;
+  successful_executions: number;
+  failed_or_blocked_executions: number;
+  average_duration_ms: number;
+  success_rate_percentage: number;
+}
+
+export interface ExecutionHistoryItem {
+  id: number;
+  plant_code: string;
+  material_code?: string;
+  execution_status: string;
+  duration_ms: number;
+  modules_executed_json?: string;
+  modules_skipped_json?: string;
+  failure_reason?: string;
+  executed_at: string;
+}
+
+export interface SimulationRunItem {
+  id: number;
+  scenario_name: string;
+  plant_code: string;
+  material_code?: string;
+  input_params: Record<string, unknown>;
+  results?: {
+    simulation_impact_summary?: {
+      simulated_available_inventory?: number;
+      simulated_daily_demand?: number;
+      simulated_safety_stock_target?: number;
+      simulated_15_day_horizon_requirement?: number;
+      simulated_net_procurement_deficit: number;
+      simulated_priority: string;
+    };
+    [key: string]: unknown;
+  };
+}
+
+export interface FormulaEntry {
+  id: string;
+  formula_name: string;
+  source_module: string;
+  mathematical_formula: string | null;
+  business_description: string;
+  required_inputs: string[];
+  generated_outputs: string[];
+  last_updated_version: string;
+}
+
+export interface SheetHeaderMapping {
+  raw_header: string;
+  mapped_field: string;
+}
+
+export interface SheetImportSummary {
+  sheet_name: string;
+  imported: number;
+  updated: number;
+  rejected: number;
+  warnings: string[];
+  header_mappings?: SheetHeaderMapping[];
+}
+
+export interface WorkbookImportReport {
+  success: boolean;
+  workbook_name: string;
+  workbook_type: string;
+  total_imported: number;
+  total_updated: number;
+  total_rejected: number;
+  execution_time_ms: number;
+  sheets_summary: SheetImportSummary[];
+  errors: string[];
+}

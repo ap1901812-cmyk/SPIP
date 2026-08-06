@@ -64,7 +64,7 @@ def test_stateless_fg_engine_pure_functions() -> None:
 
     # 3. Test compute_procurement_recommendations
     vendor_map = {
-        ("PLANT-1000", 10): {
+        10: {
             "vendor_code": "VEND-5001",
             "vendor_name": "Global Polymers",
             "vendor_lead_time_days": 10.0,

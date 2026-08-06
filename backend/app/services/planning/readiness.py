@@ -6,6 +6,7 @@ from datetime import datetime
 from typing import Any
 
 from pydantic import BaseModel, Field
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from app.core.audit import record_audit_event
@@ -19,6 +20,7 @@ from app.db.models.domain import (
     PlantMaterial,
     PlanningReadinessScore,
     PurchaseOrder,
+    PurchaseOrderLine,
     Vendor,
     VendorMaterial,
 )
@@ -136,7 +138,8 @@ class PlanningReadinessEngine:
         # 3. Optional Data Check: Purchase Orders
         po_count = (
             self.db.query(PurchaseOrder)
-            .filter(PurchaseOrder.plant_id == plant.id)
+            .outerjoin(PurchaseOrderLine, PurchaseOrder.lines)
+            .filter(or_(PurchaseOrder.plant_id == plant.id, PurchaseOrderLine.plant_id == plant.id))
             .count()
         )
         if po_count == 0:
@@ -175,7 +178,6 @@ class PlanningReadinessEngine:
         # 5. Vendor Capacity Check
         vendor_materials = (
             self.db.query(VendorMaterial)
-            .filter(VendorMaterial.plant_id == plant.id)
             .all()
         )
         missing_vendor_caps = [

@@ -9,6 +9,7 @@ class PlantBase(BaseModel):
     code: str = Field(..., max_length=20)
     name: str = Field(..., max_length=255)
     location: str | None = None
+    is_active: bool = True
 
 
 class PlantCreate(PlantBase):
@@ -53,8 +54,14 @@ class PlantMaterialResponse(BaseModel):
     review_period_days: int
     min_safety_stock: float | None = None
     max_safety_stock: float | None = None
-    lead_time_days: float
+    lead_time_days: float | None = 0.0
     safety_stock_override: float | None = None
+    lead_time_1: float | None = None
+    lead_time_2: float | None = None
+    safety_stock_1: float | None = None
+    safety_stock_2: float | None = None
+    trigger_1: float | None = None
+    trigger_2: float | None = None
 
 
 class VendorBase(BaseModel):
@@ -72,8 +79,8 @@ class VendorResponse(VendorBase):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
-    created_at: datetime
-    updated_at: datetime
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
 
 
 class VendorMaterialResponse(BaseModel):
@@ -82,7 +89,6 @@ class VendorMaterialResponse(BaseModel):
     id: int
     vendor_id: int
     material_id: int
-    plant_id: int
     is_primary: bool
     vendor_lead_time_days: float | None = None
     min_order_qty: float | None = None
@@ -141,6 +147,7 @@ class PurchaseOrderLineResponse(BaseModel):
 
     id: int
     po_id: int
+    plant_id: int | None = None
     line_number: int
     material_id: int
     order_quantity: float
@@ -156,7 +163,7 @@ class PurchaseOrderResponse(BaseModel):
     id: int
     po_number: str
     vendor_id: int
-    plant_id: int
+    plant_id: int | None = None
     status: str
     po_date: date
     lines: list[PurchaseOrderLineResponse] = []

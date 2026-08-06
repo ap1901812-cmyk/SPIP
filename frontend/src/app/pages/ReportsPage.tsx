@@ -2,14 +2,27 @@ import { useEffect, useState } from "react";
 import { domainApi, reportsApi } from "../../api/services";
 import type { Plant } from "../../api/types";
 
+const REPORT_TYPES = [
+  { id: "planning_summary", label: "1. Planning Summary Report" },
+  { id: "planning_readiness", label: "2. Planning Readiness Report" },
+  { id: "consumption_intelligence", label: "3. Consumption Intelligence Report" },
+  { id: "inventory_intelligence", label: "4. Inventory Intelligence Report" },
+  { id: "forecast_performance", label: "5. Forecast Performance Report" },
+  { id: "requirement_resolution", label: "6. Requirement Resolution Report" },
+  { id: "rm_totality", label: "7. RM Totality Report" },
+  { id: "pm_override", label: "8. PM Override Report" },
+  { id: "dependency", label: "9. Dependency Intelligence Report" },
+  { id: "production_readiness", label: "10. Production Readiness Report" },
+  { id: "procurement_recommendation", label: "11. Procurement Recommendation Report" },
+  { id: "allocation", label: "12. Procurement Allocation Report" },
+  { id: "simulation", label: "13. What-If Simulation Report" },
+];
+
 export function ReportsPage() {
   const [reportType, setReportType] = useState<string>("planning_summary");
-  const [format, setFormat] = useState<"xlsx" | "csv">("xlsx");
   const [plants, setPlants] = useState<Plant[]>([]);
   const [plantCode, setPlantCode] = useState<string>("");
   const [materialCode, setMaterialCode] = useState<string>("");
-  const [criticalityStatus, setCriticalityStatus] = useState<string>("");
-  const [allocationStatus, setAllocationStatus] = useState<string>("");
 
   const [previewData, setPreviewData] = useState<{
     title: string;
@@ -19,9 +32,7 @@ export function ReportsPage() {
   } | null>(null);
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [isExporting, setIsExporting] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [exportMessage, setExportMessage] = useState<string | null>(null);
 
   useEffect(() => {
     domainApi
@@ -34,14 +45,12 @@ export function ReportsPage() {
     let isMounted = true;
     setIsLoading(true);
     setError(null);
-    setExportMessage(null);
+
     reportsApi
       .getPreview(
         reportType,
         plantCode || undefined,
-        materialCode || undefined,
-        criticalityStatus || undefined,
-        allocationStatus || undefined
+        materialCode || undefined
       )
       .then((data) => {
         if (isMounted) setPreviewData(data);
@@ -58,129 +67,45 @@ export function ReportsPage() {
     return () => {
       isMounted = false;
     };
-  }, [reportType, plantCode, materialCode, criticalityStatus, allocationStatus]);
+  }, [reportType, plantCode, materialCode]);
 
-  const loadPreview = () => {
-    setIsLoading(true);
-    setError(null);
-    setExportMessage(null);
-    reportsApi
-      .getPreview(
-        reportType,
-        plantCode || undefined,
-        materialCode || undefined,
-        criticalityStatus || undefined,
-        allocationStatus || undefined
-      )
-      .then((data) => setPreviewData(data))
-      .catch((err: unknown) => setError(err instanceof Error ? err.message : "Failed to load report preview."))
-      .finally(() => setIsLoading(false));
-  };
-
-
-  const handleExport = async () => {
-    setIsExporting(true);
-    setError(null);
-    setExportMessage(null);
-    try {
-      const job = await reportsApi.requestExport({
-        report_type: reportType,
-        format,
-        plant_code: plantCode || undefined,
-        material_code: materialCode || undefined,
-        criticality_status: criticalityStatus || undefined,
-        status: allocationStatus || undefined,
-      });
-
-      const { blob, filename: headerFilename } = await reportsApi.downloadFile(job.download_url);
-      const filename = headerFilename || `${reportType}.${format}`;
-
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      window.URL.revokeObjectURL(url);
-
-      setExportMessage(`Successfully exported ${filename}`);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Report export failed.");
-    } finally {
-      setIsExporting(false);
-    }
+  const handleDownload = (fmt: "csv" | "xlsx" | "pdf") => {
+    const url = `${import.meta.env.VITE_API_BASE_URL || "/api/v1"}/reports/export?report_type=${reportType}&format=${fmt}${plantCode ? `&plant_code=${plantCode}` : ""}${materialCode ? `&material_code=${materialCode}` : ""}`;
+    window.open(url, "_blank");
   };
 
   return (
     <div>
       <div className="page-header">
         <div>
-          <h1 className="page-title">Reports & Analytics Export</h1>
+          <h1 className="page-title">SPIP V2 Enterprise Reports & Analytics</h1>
           <div className="eyebrow" style={{ marginTop: "0.25rem" }}>
-            ENTERPRISE CONSOLIDATED XLSX & CSV REPORTING
+            EXECUTIVE REPORTING & DATASET EXPORT ENGINE
           </div>
-        </div>
-        <div style={{ display: "flex", gap: "0.75rem" }}>
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={handleExport}
-            disabled={isExporting}
-            style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem" }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="7 10 12 15 17 10" />
-              <line x1="12" y1="15" x2="12" y2="3" />
-            </svg>
-            {isExporting ? "Generating Export..." : `Export File (${format.toUpperCase()})`}
-          </button>
         </div>
       </div>
 
-      {error && <div className="alert alert-error">{error}</div>}
-      {exportMessage && <div className="alert alert-success">{exportMessage}</div>}
-
+      {/* Control Panel */}
       <div className="card" style={{ marginBottom: "1.5rem" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr", gap: "1rem", alignItems: "end" }}>
           <div>
-            <label className="form-label" htmlFor="report-type-select">
-              Report Type
-            </label>
+            <label className="form-label">Report Category:</label>
             <select
-              id="report-type-select"
               className="form-select"
               value={reportType}
               onChange={(e) => setReportType(e.target.value)}
             >
-              <option value="planning_summary">Planning Summary</option>
-              <option value="forecast_summary">Demand Forecast Summary</option>
-              <option value="allocations">Vendor Allocations</option>
+              {REPORT_TYPES.map((rt) => (
+                <option key={rt.id} value={rt.id}>
+                  {rt.label}
+                </option>
+              ))}
             </select>
           </div>
 
           <div>
-            <label className="form-label" htmlFor="format-select">
-              Export Format
-            </label>
+            <label className="form-label">Filter Plant:</label>
             <select
-              id="format-select"
-              className="form-select"
-              value={format}
-              onChange={(e) => setFormat(e.target.value as "xlsx" | "csv")}
-            >
-              <option value="xlsx">Excel Workbook (.xlsx)</option>
-              <option value="csv">CSV Spreadsheet (.csv)</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="form-label" htmlFor="plant-filter-select">
-              Plant Location
-            </label>
-            <select
-              id="plant-filter-select"
               className="form-select"
               value={plantCode}
               onChange={(e) => setPlantCode(e.target.value)}
@@ -195,88 +120,63 @@ export function ReportsPage() {
           </div>
 
           <div>
-            <label className="form-label" htmlFor="material-filter-input">
-              Material Code Filter
-            </label>
+            <label className="form-label">Material Filter:</label>
             <input
-              id="material-filter-input"
               type="text"
               className="form-input"
-              placeholder="e.g. MAT-1001"
+              placeholder="e.g. RM-101"
               value={materialCode}
               onChange={(e) => setMaterialCode(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") loadPreview();
-              }}
             />
           </div>
-
-          {reportType === "planning_summary" && (
-            <div>
-              <label className="form-label" htmlFor="criticality-filter-select">
-                Criticality Filter
-              </label>
-              <select
-                id="criticality-filter-select"
-                className="form-select"
-                value={criticalityStatus}
-                onChange={(e) => setCriticalityStatus(e.target.value)}
-              >
-                <option value="">All Criticalities</option>
-                <option value="CRITICAL">CRITICAL Only</option>
-                <option value="WARNING">WARNING Only</option>
-                <option value="HEALTHY">HEALTHY Only</option>
-              </select>
-            </div>
-          )}
-
-          {reportType === "allocations" && (
-            <div>
-              <label className="form-label" htmlFor="status-filter-select">
-                Allocation Status
-              </label>
-              <select
-                id="status-filter-select"
-                className="form-select"
-                value={allocationStatus}
-                onChange={(e) => setAllocationStatus(e.target.value)}
-              >
-                <option value="">All Statuses</option>
-                <option value="DRAFT">DRAFT</option>
-                <option value="PENDING_APPROVAL">PENDING_APPROVAL</option>
-                <option value="APPROVED">APPROVED</option>
-                <option value="REJECTED">REJECTED</option>
-              </select>
-            </div>
-          )}
-        </div>
-
-        <div style={{ marginTop: "1rem", textAlign: "right" }}>
-          <button type="button" className="btn btn-secondary" onClick={loadPreview}>
-            Refresh Preview
-          </button>
         </div>
       </div>
 
-      {isLoading ? (
-        <div className="card" style={{ textAlign: "center", padding: "3rem", color: "var(--text-muted)" }}>
-          Generating report preview...
-        </div>
-      ) : !previewData || previewData.rows.length === 0 ? (
-        <div className="card" style={{ textAlign: "center", padding: "3rem" }}>
-          <h3 style={{ color: "var(--text-muted)", marginBottom: "0.5rem" }}>No Report Data Found</h3>
-          <p className="text-secondary">Try adjusting your filters or selecting a different report type.</p>
-        </div>
-      ) : (
-        <div className="card" style={{ padding: 0, overflow: "hidden" }}>
-          <div style={{ padding: "1rem 1.5rem", borderBottom: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: "700" }}>{previewData.title}</h3>
-            <span className="user-role-badge" style={{ background: "var(--surface-subtle)", color: "var(--text-main)" }}>
-              {previewData.total_records} Records
+      {/* Export Toolbar & Data Preview */}
+      <div className="card">
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+          <div>
+            <h3 style={{ margin: 0 }}>{previewData ? previewData.title : "Report Dataset Preview"}</h3>
+            <span style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
+              {previewData ? `${previewData.total_records} record(s) loaded` : ""}
             </span>
           </div>
-          <div className="spip-table-container">
-            <table className="spip-table">
+
+          {/* Export Action Buttons */}
+          <div style={{ display: "flex", gap: "0.5rem" }}>
+            <button
+              onClick={() => handleDownload("csv")}
+              className="btn btn-secondary"
+              style={{ fontSize: "0.85rem" }}
+            >
+              📥 Export CSV
+            </button>
+            <button
+              onClick={() => handleDownload("xlsx")}
+              className="btn btn-secondary"
+              style={{ fontSize: "0.85rem" }}
+            >
+              📊 Export Excel (XLSX)
+            </button>
+            <button
+              onClick={() => handleDownload("pdf")}
+              className="btn btn-primary"
+              style={{ fontSize: "0.85rem" }}
+            >
+              📄 Export PDF Report
+            </button>
+          </div>
+        </div>
+
+        {isLoading ? (
+          <div style={{ padding: "3rem", textAlign: "center", color: "var(--text-muted)" }}>
+            Fetching enterprise report dataset...
+          </div>
+        ) : error ? (
+          <div className="alert alert-error">{error}</div>
+        ) : previewData && previewData.rows.length > 0 ? (
+          <div style={{ overflowX: "auto" }}>
+            <table className="data-table">
               <thead>
                 <tr>
                   {previewData.headers.map((h, i) => (
@@ -285,27 +185,22 @@ export function ReportsPage() {
                 </tr>
               </thead>
               <tbody>
-                {previewData.rows.map((row, rowIndex) => (
-                  <tr key={rowIndex}>
-                    {row.map((cell, cellIndex) => (
-                      <td
-                        key={cellIndex}
-                        style={{
-                          whiteSpace: cellIndex === previewData.headers.length - 1 ? "normal" : "nowrap",
-                          textAlign: typeof cell === "number" ? "right" : "left",
-                          fontWeight: cellIndex === 0 || cellIndex === 2 ? "600" : "normal",
-                        }}
-                      >
-                        {cell === null || cell === "" ? "—" : String(cell)}
-                      </td>
+                {previewData.rows.map((row, idx) => (
+                  <tr key={idx}>
+                    {row.map((cell, cIdx) => (
+                      <td key={cIdx}>{cell !== null && cell !== undefined ? String(cell) : ""}</td>
                     ))}
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-        </div>
-      )}
+        ) : (
+          <div style={{ padding: "2rem", textAlign: "center", color: "var(--text-muted)" }}>
+            No records found for this report configuration.
+          </div>
+        )}
+      </div>
     </div>
   );
 }

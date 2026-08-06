@@ -216,6 +216,15 @@ export function AppShell() {
                 >
                   Demand Forecasting
                 </NavLink>
+
+                <NavLink
+                  to="/simulations"
+                  className={({ isActive }) =>
+                    `sidebar-nav-item ${isActive ? "active" : ""}`
+                  }
+                >
+                  What-If Simulations
+                </NavLink>
               </div>
             )}
           </div>
@@ -262,7 +271,7 @@ export function AppShell() {
                     `sidebar-nav-item ${isActive ? "active" : ""}`
                   }
                 >
-                  Where-Used Analysis
+                  RM Totality & FG Dependency Analysis
                 </NavLink>
               </div>
             )}
@@ -405,6 +414,24 @@ export function AppShell() {
               </button>
               {openSections.admin && (
                 <div style={{ paddingLeft: "0.5rem" }}>
+                  <NavLink
+                    to="/admin/formulas"
+                    className={({ isActive }) =>
+                      `sidebar-nav-item ${isActive ? "active" : ""}`
+                    }
+                  >
+                    Formula Explorer
+                  </NavLink>
+
+                  <NavLink
+                    to="/monitoring"
+                    className={({ isActive }) =>
+                      `sidebar-nav-item ${isActive ? "active" : ""}`
+                    }
+                  >
+                    Monitoring & Telemetry
+                  </NavLink>
+
                   <NavLink
                     to="/users"
                     className={({ isActive }) =>

@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     app_debug: bool = False
     api_v1_prefix: str = "/api/v1"
     allowed_origins: Annotated[list[str], NoDecode] = Field(default_factory=list)
-    max_request_body_bytes: int = Field(default=1_048_576, ge=1, le=52_428_800)
+    max_request_body_bytes: int = Field(default=104_857_600, ge=1, le=524_288_000)
     database_url: PostgresDsn
     secret_key: str = Field(
         default="dev_secret_key_change_in_production_min_32_bytes_long_string",

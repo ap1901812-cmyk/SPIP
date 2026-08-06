@@ -88,7 +88,7 @@ export const DependencyPage: React.FC = () => {
     <div>
       <div className="page-header">
         <div>
-          <h2 className="page-title">Where-Used & Dependency Analysis</h2>
+          <h2 className="page-title">RM Totality & FG Dependency Analysis</h2>
           <div style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginTop: "0.25rem" }}>
             Identify parent Finished Goods dependent on raw & packaging components, and analyze downstream component recipes.
           </div>
@@ -136,7 +136,7 @@ export const DependencyPage: React.FC = () => {
           {/* Upstream Where-Used Table */}
           <div className="card" style={{ marginBottom: "1.5rem" }}>
             <h3 style={{ margin: "0 0 1rem 0", fontSize: "1.1rem", fontWeight: "700" }}>
-              Where-Used: Parent Finished Goods Consuming {selectedMaterial.code}
+              FG Totality Dependency: Parent Finished Goods Consuming {selectedMaterial.code}
             </h3>
             {!whereUsedData || whereUsedData.where_used.length === 0 ? (
               <div style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>No Finished Goods currently consume or depend on this component material.</div>

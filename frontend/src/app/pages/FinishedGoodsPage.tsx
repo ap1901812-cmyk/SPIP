@@ -131,7 +131,7 @@ export const FinishedGoodsPage: React.FC = () => {
                   <th>Classification</th>
                   <th>FG Base UOM</th>
                   <th>Plants</th>
-                  <th>BOM Components</th>
+                  <th>Material & Packaging Components</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -202,7 +202,7 @@ export const FinishedGoodsPage: React.FC = () => {
                 style={{ borderRadius: "0.375rem 0.375rem 0 0", padding: "0.4rem 0.85rem", fontSize: "0.85rem" }}
                 onClick={() => setActiveTab("bom")}
               >
-                BOM Components ({selectedFgDetail.rm_components_count + selectedFgDetail.pm_components_count})
+                Material & Packaging Components ({selectedFgDetail.rm_components_count + selectedFgDetail.pm_components_count})
               </button>
               <button
                 type="button"

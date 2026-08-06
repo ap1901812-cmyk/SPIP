@@ -62,17 +62,13 @@ def _seed_allocation_data(db: Session, plant_code: str, mat_code: str) -> tuple[
     vm1 = VendorMaterial(
         vendor_id=v1.id,
         material_id=mat.id,
-        plant_id=plant.id,
         is_primary=True,
-        vendor_lead_time_days=7.0,
         min_order_qty=100.0,
     )
     vm2 = VendorMaterial(
         vendor_id=v2.id,
         material_id=mat.id,
-        plant_id=plant.id,
         is_primary=False,
-        vendor_lead_time_days=5.0,
         min_order_qty=50.0,
     )
     rec = ProcurementRecommendation(

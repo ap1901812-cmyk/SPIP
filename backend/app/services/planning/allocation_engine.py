@@ -104,7 +104,7 @@ def generate_procurement_allocations(
         # Fetch vendors offering this material at the plant
         vendor_materials = (
             db.query(VendorMaterial)
-            .filter(VendorMaterial.plant_id == plant.id, VendorMaterial.material_id == mat.id)
+            .filter(VendorMaterial.material_id == mat.id)
             .order_by(VendorMaterial.is_primary.desc())
             .all()
         )

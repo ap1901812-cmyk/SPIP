@@ -48,9 +48,13 @@ async def app_error_handler(request: Request, exc: AppError) -> JSONResponse:
     return JSONResponse(
         status_code=exc.status_code,
         content=ErrorResponse(
-            code=exc.code, message=exc.message, request_id=request_id_from(request)
-        ).model_dump(),
+            code=exc.code,
+            message=exc.message,
+            request_id=request_id_from(request),
+            details=exc.details,
+        ).model_dump(exclude_none=True),
     )
+
 
 
 @app.exception_handler(RequestValidationError)

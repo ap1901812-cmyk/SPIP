@@ -20,11 +20,55 @@ from app.services.reporting import (
     VALID_FORMATS,
     ReportingError,
     build_csv_export,
+    build_pdf_export,
     build_xlsx_export,
     get_report_dataset,
 )
 
 router = APIRouter(prefix="/reports", tags=["reports"])
+
+
+@router.get("/export", summary="Direct Report File Download")
+@router.get("/download", summary="Direct Report File Download Alias")
+def api_download_report_export(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    report_type: str = Query("planning_summary", description="Report type"),
+    format: str = Query("csv", description="Export format: csv, xlsx, or pdf"),
+    plant_code: str | None = Query(None),
+    material_code: str | None = Query(None),
+    criticality_status: str | None = Query(None),
+    status: str | None = Query(None),
+) -> Response:
+    norm_format = format.lower()
+    if norm_format not in VALID_FORMATS:
+        raise ReportingError(f"Unsupported format '{format}'. Valid formats: csv, xlsx, pdf.", 400)
+
+    title, headers, rows = get_report_dataset(
+        db, report_type, plant_code, material_code, criticality_status, status
+    )
+
+    clean_name = report_type.lower().replace(" ", "_")
+    ts = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+
+    if norm_format == "csv":
+        data = build_csv_export(headers, rows)
+        media_type = "text/csv"
+        filename = f"{clean_name}_{ts}.csv"
+    elif norm_format == "xlsx":
+        data = build_xlsx_export(title, headers, rows)
+        media_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        filename = f"{clean_name}_{ts}.xlsx"
+    else:
+        data = build_pdf_export(title, headers, rows)
+        media_type = "application/pdf"
+        filename = f"{clean_name}_{ts}.pdf"
+
+    return Response(
+        content=data,
+        media_type=media_type,
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 @router.get("", response_model=ReportDatasetResponseSchema)

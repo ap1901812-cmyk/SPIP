@@ -138,11 +138,11 @@ class FGPlanningService:
                     }
 
         # 6. Load VendorMaterial map for procurement recommendations
-        vms = db.query(VendorMaterial).options(joinedload(VendorMaterial.vendor), joinedload(VendorMaterial.plant)).all()
-        vendor_map: dict[tuple[str, int], dict[str, Any]] = {}
+        vms = db.query(VendorMaterial).options(joinedload(VendorMaterial.vendor)).all()
+        vendor_map: dict[int, dict[str, Any]] = {}
         for vm in vms:
-            if vm.plant and vm.is_primary:
-                vendor_map[(vm.plant.code, vm.material_id)] = {
+            if vm.is_primary:
+                vendor_map[vm.material_id] = {
                     "vendor_code": vm.vendor.code if vm.vendor else None,
                     "vendor_name": vm.vendor.name if vm.vendor else None,
                     "vendor_lead_time_days": vm.vendor_lead_time_days or 7.0,

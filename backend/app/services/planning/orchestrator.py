@@ -118,7 +118,7 @@ def execute_full_planning_pipeline(
             failure_reason = f"Pipeline blocked by Planning Readiness score ({readiness_res.score:.1f}%)."
             modules_skipped = [m for m in all_modules if m not in modules_executed]
 
-        else:
+        elif material:
             # Step 3: Consumption Intelligence
             c_intel = analyze_consumption_intelligence(db, plant.id, material.id)
             results["consumption_intelligence"] = c_intel.model_dump()
@@ -227,19 +227,20 @@ def execute_full_planning_pipeline(
         "overall_status": execution_status,
     }
 
-    # Save PlanningExecutionRecord in DB
-    exec_rec = PlanningExecutionRecord(
-        plant_id=plant.id,
-        material_id=material.id,
-        execution_status=execution_status,
-        duration_ms=duration_ms,
-        modules_executed_json=json.dumps(modules_executed),
-        modules_skipped_json=json.dumps(modules_skipped),
-        failure_reason=failure_reason,
-        details_json=json.dumps(summary),
-    )
-    db.add(exec_rec)
-    db.flush()
+    # Save PlanningExecutionRecord in DB if material exists
+    if material:
+        exec_rec = PlanningExecutionRecord(
+            plant_id=plant.id,
+            material_id=material.id,
+            execution_status=execution_status,
+            duration_ms=duration_ms,
+            modules_executed_json=json.dumps(modules_executed),
+            modules_skipped_json=json.dumps(modules_skipped),
+            failure_reason=failure_reason,
+            details_json=json.dumps(summary),
+        )
+        db.add(exec_rec)
+        db.flush()
 
     # Log audit event
     record_audit_event(
@@ -247,7 +248,7 @@ def execute_full_planning_pipeline(
         user_id=user_id,
         action="EXECUTE_PLANNING_PIPELINE",
         resource_type="PlanningExecutionRecord",
-        resource_id=str(exec_rec.id),
+        resource_id=str(exec_rec.id) if 'exec_rec' in locals() and exec_rec else "PIPELINE",
         details={
             "plant_code": plant_code,
             "material_code": material_code,
@@ -258,8 +259,8 @@ def execute_full_planning_pipeline(
 
     return UnifiedPlanningResult(
         plant_code=plant_code,
-        material_code=material_code,
-        material_type=material.material_type,
+        material_code=material_code or (material.code if material else None),
+        material_type=material.material_type if material else "RM",
         as_of_timestamp=end_ts,
         execution_metadata=metadata,
         intermediate_results=results,

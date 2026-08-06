@@ -41,62 +41,88 @@ def build_and_evaluate_rm_totality(
     rm_code = rm_mat.code if rm_mat else str(rm_material_id)
     rm_desc = rm_mat.description if rm_mat else "Raw Material"
 
-    # Find Finished Goods consuming this Raw Material via BOM relationships or historical records
-    boms = (
-        db.query(BOM)
-        .filter(BOM.component_material_id == rm_material_id)
+    totality_group = f"RM_TOTALITY_GROUP_{rm_code}"
+    contributing_fgs: list[ContributingFGDetail] = []
+
+    # 1. Query existing RMTotalityMappings for this plant and RM
+    mappings = (
+        db.query(RMTotalityMapping)
+        .filter(
+            RMTotalityMapping.plant_id == plant_id,
+            RMTotalityMapping.rm_material_id == rm_material_id,
+        )
         .all()
     )
 
-    contributing_fgs: list[ContributingFGDetail] = []
-    totality_group = f"RM_TOTALITY_GROUP_{rm_code}"
-
-    if boms:
-        total_bom_ratio = sum(float(b.required_quantity) for b in boms)
-        for b in boms:
-            fg = b.fg_material
-            ratio = (float(b.required_quantity) / total_bom_ratio) if total_bom_ratio > 0 else (1.0 / len(boms))
+    if mappings:
+        total_ratio = sum(float(m.consumption_ratio) for m in mappings)
+        for m in mappings:
+            ratio = (float(m.consumption_ratio) / total_ratio) if total_ratio > 0 else (1.0 / len(mappings))
             fg_demand = round(final_resolved_requirement * ratio, 4)
-
             contributing_fgs.append(
                 ContributingFGDetail(
-                    fg_code=fg.code if fg else f"FG_{b.fg_material_id}",
-                    fg_description=fg.description if fg else "Finished Good",
+                    fg_code=m.fg_group_name,
+                    fg_description=f"RM Totality Group ({m.fg_group_name})",
                     contribution_ratio=round(ratio, 4),
                     demand_contribution=fg_demand,
                 )
             )
-
-        mapping = (
-            db.query(RMTotalityMapping)
-            .filter(
-                RMTotalityMapping.plant_id == plant_id,
-                RMTotalityMapping.rm_material_id == rm_material_id,
-                RMTotalityMapping.fg_group_name == totality_group,
-            )
-            .first()
-        )
-        if not mapping:
-            mapping = RMTotalityMapping(
-                plant_id=plant_id,
-                rm_material_id=rm_material_id,
-                fg_group_name=totality_group,
-                consumption_ratio=1.0,
-            )
-            db.add(mapping)
-        else:
-            mapping.consumption_ratio = 1.0
-        db.flush()
     else:
-        # Fallback if no BOM links exist yet
-        contributing_fgs.append(
-            ContributingFGDetail(
-                fg_code="GENERIC_FG_FAMILY",
-                fg_description="Aggregated Finished Goods Family",
-                contribution_ratio=1.0,
-                demand_contribution=round(final_resolved_requirement, 4),
+        # 2. Derive RM Totality from historical consumption records
+        cons_records = (
+            db.query(ConsumptionHistory)
+            .filter(
+                ConsumptionHistory.plant_id == plant_id,
+                ConsumptionHistory.material_id == rm_material_id,
             )
+            .all()
         )
+
+        if cons_records:
+            contributing_fgs.append(
+                ContributingFGDetail(
+                    fg_code=totality_group,
+                    fg_description="Historical Consumption Group",
+                    contribution_ratio=1.0,
+                    demand_contribution=round(final_resolved_requirement, 4),
+                )
+            )
+        else:
+            # Check BOM links to discover initial parent FGs for RM Totality mapping
+            boms = db.query(BOM).filter(BOM.component_material_id == rm_material_id).all()
+            if boms:
+                total_bom_ratio = sum(float(b.required_quantity) for b in boms)
+                for b in boms:
+                    fg = b.fg_material
+                    ratio = (float(b.required_quantity) / total_bom_ratio) if total_bom_ratio > 0 else (1.0 / len(boms))
+                    fg_demand = round(final_resolved_requirement * ratio, 4)
+                    contributing_fgs.append(
+                        ContributingFGDetail(
+                            fg_code=fg.code if fg else f"FG_{b.fg_material_id}",
+                            fg_description=fg.description if fg else "Finished Good",
+                            contribution_ratio=round(ratio, 4),
+                            demand_contribution=fg_demand,
+                        )
+                    )
+            else:
+                contributing_fgs.append(
+                    ContributingFGDetail(
+                        fg_code="GENERIC_FG_FAMILY",
+                        fg_description="Aggregated Finished Goods Family",
+                        contribution_ratio=1.0,
+                        demand_contribution=round(final_resolved_requirement, 4),
+                    )
+                )
+
+        # Persist initial RMTotalityMapping
+        new_mapping = RMTotalityMapping(
+            plant_id=plant_id,
+            rm_material_id=rm_material_id,
+            fg_group_name=totality_group,
+            consumption_ratio=1.0,
+        )
+        db.add(new_mapping)
+        db.flush()
 
     explanation = (
         f"RM Totality Planning calculated total RM requirement ({final_resolved_requirement:.2f} {rm_mat.base_uom if rm_mat else 'KG'}) "

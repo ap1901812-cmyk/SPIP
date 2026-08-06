@@ -3,15 +3,8 @@ from __future__ import annotations
 import logging
 
 from app.core.security import hash_password
-from app.db.models.domain import (
-    Material,
-    Plant,
-    Vendor,
-    VendorMaterial,
-)
 from app.db.models.user import RoleEnum, User, UserRole
 from app.db.session import SessionLocal
-from app.services.sap.mock import MockSAPAdapter
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("spip.seed")
@@ -77,54 +70,8 @@ def seed_database() -> None:
                 user.must_change_password = False
                 db.flush()
 
-        # 2. Sync domain data from SAP Mock Adapter
-        sap_adapter = MockSAPAdapter()
-        counts = sap_adapter.sync_to_database(db)
-        logger.info("Synced SAP mock data: %s", counts)
-
-        # 3. Ensure Primary VendorMaterial Relationships
-        plant_1000 = db.query(Plant).filter(Plant.code == "PLANT-1000").first()
-        plant_2000 = db.query(Plant).filter(Plant.code == "PLANT-2000").first()
-        mat_1001 = db.query(Material).filter(Material.code == "MAT-1001").first()
-        mat_2002 = db.query(Material).filter(Material.code == "MAT-2002").first()
-        vend_5001 = db.query(Vendor).filter(Vendor.code == "VEND-5001").first()
-        vend_5002 = db.query(Vendor).filter(Vendor.code == "VEND-5002").first()
-
-        vm_relationships = [
-            (vend_5001, mat_1001, plant_1000, 7.0, 100.0),
-            (vend_5002, mat_2002, plant_2000, 5.0, 200.0),
-        ]
-
-        for v, m, p, lead_time, min_qty in vm_relationships:
-            if v and m and p:
-                vm = (
-                    db.query(VendorMaterial)
-                    .filter(
-                        VendorMaterial.vendor_id == v.id,
-                        VendorMaterial.material_id == m.id,
-                        VendorMaterial.plant_id == p.id,
-                    )
-                    .first()
-                )
-                if not vm:
-                    vm = VendorMaterial(
-                        vendor_id=v.id,
-                        material_id=m.id,
-                        plant_id=p.id,
-                        is_primary=True,
-                        vendor_lead_time_days=lead_time,
-                        min_order_qty=min_qty,
-                    )
-                    db.add(vm)
-                    logger.info(
-                        "Created VendorMaterial relationship: %s / %s / %s",
-                        v.code,
-                        m.code,
-                        p.code,
-                    )
-
         db.commit()
-        logger.info("Database seeding completed successfully.")
+        logger.info("Database seeding completed successfully (users & roles only).")
     except Exception:
         db.rollback()
         logger.exception("Database seeding failed.")
